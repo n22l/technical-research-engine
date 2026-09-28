@@ -4,12 +4,13 @@
 
 Given a factual question or claim, the system is being developed to search authoritative public sources, retrieve supporting and contradicting evidence, compare source differences, and produce a concise answer or verification judgment with traceable citations.
 
-**Current stage: local retrieval plus a human-reviewed verification vertical slice.** This is not an autonomous fact-checker. No LLM or search API is configured. Retrieved text cannot instruct the engine or generate its own review labels.
+**Current stage: local retrieval, automatic source discovery, and human-reviewed verification.** A Brave Web Search API adapter is implemented and mock-tested; live API integration remains unverified without credentials. No LLM is required. Retrieved text cannot instruct the engine or generate its own review labels.
 
 ## Implemented now
 
 - Preserved prepared-text ingestion, English/Chinese lexical passage retrieval, source metadata and Hit@5 evaluation, including the legacy CLI.
 - Request/claim records; conservative semicolon/newline splitting or explicit atomic claims.
+- Bounded deterministic query intents, Brave API adapter, URL deduplication and auditable source selection with publisher diversity.
 - Configurable exact-host source policy; subdomains require explicit opt-in.
 - Bounded public HTTPS fetching from manual URLs; inert UTF-8 HTML and optional physical-page PDF extraction.
 - Original passages, hashes, source metadata, section/extracted-paragraph/character-span locators.
@@ -25,7 +26,7 @@ Semantic verification depends on human annotations. Source qualification, depend
 
 ## Planned
 
-Search API adapters, evaluated semantic interpretation, substantive answer synthesis, held-out verification benchmarks, evidence-backed entity aliases, translation evaluation, cross-language retrieval and OCR. No frontend or cloud deployment is required.
+Live search integration validation, evaluated semantic interpretation, substantive answer synthesis, held-out verification benchmarks, evidence-backed entity aliases, translation evaluation, cross-language retrieval and OCR. No frontend or cloud deployment is required.
 
 ## Run
 
@@ -57,11 +58,20 @@ A reviewer binds assessments to claims and document hashes and checks relevance,
 
 ## Search and evaluation status
 
-Manual URLs are the only implemented search provider. Online runs report `CURRENT_WEB_RESEARCH_UNAVAILABLE` and `SEARCH_UNAVAILABLE` even when supplied pages fetch. Search intents are planned, not falsely recorded as issued. No search credentials are read. Live search is unverified.
+Automatic discovery uses the documented Brave Web Search API. Set `TECH_RESEARCH_SEARCH_PROVIDER=brave` and supply `BRAVE_SEARCH_API_KEY` through the process environment. No credentials are discovered or stored. Existing manual/offline workflows require no API key. Missing configuration reports SEARCH_UNAVAILABLE; API errors withhold automatic verdicts. Live search remains unverified because no key was available.
+
+```powershell
+python -B src/verify.py research "Has China reflown a recovered orbital-class booster?" --search-provider brave --domain aerospace --review-only
+python -B src/verify.py research --question-file question.txt --search-provider brave --review-only
+```
+
+Use an existing external `TECH_RESEARCH_DATA_DIR`. Queries are sent to the configured provider; captures, discovery metadata and review reports stay outside Git. Default bounds are eight queries, five results per query, twenty candidates and eight fetches. Search snippets never become evidence, and unregistered sources require policy review. See [automatic web search](docs/automatic-web-search.md) for setup, costs, failure states and replay.
 
 Baseline: 19 tests, two Windows symlink skips; synthetic Hit@5 6/6, with two unanswerable cases excluded. The upgrade adds synthetic verification/security regressions. Green tests do not establish real-world verdict accuracy. See [evaluation](docs/evaluation-plan.md).
 
 Completion audit: 42 tests, including optional PDF page extraction, pass with two Windows symlink skips. Manual NASA HTTPS fetch/HTML extraction was exercised; live search remains unavailable. Both `research --demo` and `verify --demo --review-only` withhold the verdict.
+
+Automatic-discovery upgrade: 64 tests, 62 passed and the same two skips; Hit@5 remains 6/6. Mocked end-to-end discovery selected/fetched two synthetic authoritative sources and withheld the verdict for review. No live API results or production search scores are claimed.
 
 ## Documentation
 

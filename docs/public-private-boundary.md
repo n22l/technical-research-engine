@@ -2,6 +2,8 @@
 
 # Public/private boundary
 
+Automatic discovery records queries, bounded titles/snippets, original URLs and policy decisions only in external private reports. Search snippets never become evidence. Only the documented Brave key environment variable is read, and its value is neither logged nor saved. Search queries are transmitted to the selected API provider; a private question file protects shell history but does not make an online query local-only. Offline mode makes no search calls.
+
 ## Public Git repository
 
 Reusable software, public documentation, safe examples, tests, the evaluation framework, and explicitly synthetic demonstration data may be committed. The bundled fixture text, publisher labels, and source identifiers are invented and MIT-licensed. They are not production aerospace evidence.

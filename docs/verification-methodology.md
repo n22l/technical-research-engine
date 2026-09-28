@@ -4,7 +4,7 @@ The question is what retrieved, reviewed evidence supports. Lexical relevance is
 
 AUTO recognizes final question marks; other inputs default to CLAIM. Automatic decomposition splits semicolons/newlines without inventing pronoun bindings. Supply `atomic_claims` for compound statements; human reviewers must check coverage. COMPARISON uses the same pipeline.
 
-Four bounded query intents seek primary records, independent reporting, corrections and contradiction. They remain unissued: only manual URLs are implemented. Online runs explicitly flag search unavailable. Snippets never enter the evidence path. Approved manual URLs fetch actual pages; offline mode reads explicit private captures.
+Five bounded query intents seek primary sources, official records, independent confirmation, updates and contradiction/correction. The configured Brave API adapter can issue these queries; manual URLs remain supported and merge with discovered URLs. Exact-host policy and publisher-diverse selection precede fetching. Unregistered hosts require policy review. Missing configuration and API failures are explicit. Snippets never enter the evidence path. Approved URLs fetch actual pages; offline mode reads explicit private captures without API calls. See [automatic web search](automatic-web-search.md).
 
 ## Private bundle
 
@@ -46,6 +46,6 @@ Same publishers, canonical copies, explicit links and near-duplicates are groupe
 | INSUFFICIENT_PUBLIC_EVIDENCE | Retrieved approved evidence cannot establish the claim; not proof of absence in reality. |
 | OUTDATED | A reviewed newer correction supersedes previous supporting evidence. |
 
-Sufficiency (SUFFICIENT/PARTIAL/INSUFFICIENT) is separate and limited to this run. No numeric confidence is invented. Questions render as answers; current main text is templated, not synthesized domain prose.
+Sufficiency (SUFFICIENT/PARTIAL/INSUFFICIENT) is separate and limited to this run. Failed automatic discovery suppresses the final verdict; successful discovery with no usable evidence supports insufficiency. Existing manual-only assessments remain explicitly limited to supplied documents. No numeric confidence is invented. Questions render as answers; current main text is templated, not synthesized domain prose.
 
 Reports preserve source text, normalized fact, interpretation and verdict separately. Private manifests contain request/as-of, policy/limits, hashes, retrieval times, planned versus issued queries, evidence IDs, reviews, events and engine version. Captures are created exclusively externally. Error states include SEARCH_UNAVAILABLE, FETCH_FAILED, SOURCE_NOT_ALLOWED, PARSE_FAILED, INSUFFICIENT_EVIDENCE, CITATION_VALIDATION_FAILED and CONFLICT_UNRESOLVED. No secrets or full source text enter event logs; exact passages are intentionally retained in private evidence records.

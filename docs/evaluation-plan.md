@@ -2,6 +2,8 @@
 
 # Evaluation plan
 
+Automatic discovery now has synthetic API/selection tests in `tests/test_search_discovery.py`. `search_discovery.evaluate_discovery(selected_urls, expected_authoritative_domains, forbidden_domains, k)` computes expected-domain recall, labeled approved-URL precision and forbidden selections. The denominator for recall is unique expected domains; precision uses selected URLs at k. Empty expected sets or selected lists produce null for the relevant metric. These are fixture metrics, not production scores. API contract tests use mocked HTTP; no live-search accuracy is claimed.
+
 **Status: Synthetic retrieval smoke evaluation implemented; broader protocol proposed.**
 
 The current command evaluates six authored answerable fixture questions using expected-passage hit@5, plus two manually labeled unsupported questions for inspection only. These are not held-out research benchmarks. See the [local guide](local-retrieval.md) for exact scoring, commands, and a private ten-question workflow. Citation entailment, evidence-status classification, and generated-claim evaluation below remain future work.
