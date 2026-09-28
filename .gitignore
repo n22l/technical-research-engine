@@ -35,3 +35,6 @@ result-*.json
 indexes/
 embeddings/
 secrets/
+capture-*.bin
+run-*.json
+reviewed.json

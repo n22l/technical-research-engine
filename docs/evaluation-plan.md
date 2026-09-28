@@ -1,3 +1,5 @@
+> Upgrade: tests/test_verification.py adds synthetic policy, citation integrity, dependency, temporal correction, plan/reuse, conflict, insufficiency, PDF-page, injection, private-output and network-boundary tests. These are regression tests, not a labeled accuracy benchmark. Existing Hit@5 below is unchanged.
+
 # Evaluation plan
 
 **Status: Synthetic retrieval smoke evaluation implemented; broader protocol proposed.**

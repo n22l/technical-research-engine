@@ -1,3 +1,5 @@
+> Runtime update: rules.py provides an optional reviewed-maturity guard. See docs/verification-methodology.md for the separate human-reviewed pipeline.
+
 # Domain 01 — Aerospace Intelligence
 
 The first research application is **reusable-rocket economics and launch cadence** for **US–China Space Watch / 中美航天观察**. English/Chinese synthetic retrieval examples are implemented; real-corpus validation remains separate and private.

@@ -1,0 +1,9 @@
+{
+  "sources": {
+    "www.nasa.gov": {"tier": 1, "type": "government", "publisher": "NASA", "allowed": true, "official": true, "primary": true},
+    "www.faa.gov": {"tier": 1, "type": "regulator", "publisher": "FAA", "allowed": true, "official": true, "primary": true},
+    "www.cnsa.gov.cn": {"tier": 1, "type": "government", "publisher": "CNSA", "allowed": true, "official": true, "primary": true},
+    "www.spacex.com": {"tier": 1, "type": "company", "publisher": "SpaceX", "allowed": true, "official": true, "primary": true},
+    "www.reuters.com": {"tier": 2, "type": "major_news", "publisher": "Reuters", "allowed": true, "official": false, "primary": false}
+  }
+}

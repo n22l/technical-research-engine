@@ -1,3 +1,5 @@
+> Verification extension: manual web captures, reviews, exact evidence, run manifests and Markdown reports also remain in the validated external directory. CLI output contains fixed status messages. No automatic production cache or credential discovery is used.
+
 # Public/private boundary
 
 ## Public Git repository
