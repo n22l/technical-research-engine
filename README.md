@@ -78,3 +78,7 @@ Automatic-discovery upgrade: 64 tests, 62 passed and the same two skips; Hit@5 r
 [Architecture](docs/architecture.md), [methodology](docs/verification-methodology.md), [source policy](docs/source-policy.md), [citation model](docs/citation-model.md), [multilingual research](docs/multilingual-research.md), [roadmap](docs/roadmap.md), [upgrade record](docs/upgrade-record.md), [public/private boundary](docs/public-private-boundary.md).
 
 The first application is Aerospace Intelligence for US–China Space Watch / 中美航天观察. Editorial material stays private. This is an independent personal project, not an official university project. Original code, documentation and synthetic fixtures use the [MIT License](LICENSE); third-party sources retain their rights.
+
+## Free local discovery default
+
+Question-only research defaults to a bounded approved-site crawler/index with no API key. Use an external `TECH_RESEARCH_DATA_DIR`, then run `python -B src/verify.py research "booster reflight" --review-only`. The private index is reused for up to 24 hours; use `--refresh-local-index` to refresh. Coverage is limited to approved seeds and shallow links, not the entire web. Brave remains explicitly selectable as an optional fallback; paid fallback is never automatic. Existing manual/offline modes remain supported. See [configuration and limits](docs/automatic-web-search.md#free-local-default). Tests: 66 passed, two skipped; live crawling remains unverified. Optional SearXNG is deferred.

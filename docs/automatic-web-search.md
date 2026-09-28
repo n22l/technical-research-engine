@@ -61,3 +61,18 @@ Search results are snapshots in the private report, not an automatic reusable ca
 The adapter contract, error mapping, bounds, URL validation, source selection, snippet isolation, private CLI, offline replay and temporal safeguards are covered by synthetic tests. `evaluate_discovery` accepts selected URLs, expected authoritative domains and forbidden domains, reporting domain recall and labeled URL precision at k. It measures fixture selection only, not production search quality or factual accuracy.
 
 No Brave key was configured during implementation, so live API integration remains unverified. The NASA manual fetch from the previous milestone is not a live search test. Search quality, registry coverage, decomposition, dependency detection, multilingual retrieval and semantic entailment remain limited. Human review remains mandatory for factual assessments.
+
+## Free local default
+
+Question-only research now defaults to `local`, a free bounded crawler and private lexical index. No API key is required. Existing bundles and explicit manual URLs retain manual behavior unless a provider is selected. Brave remains an explicit optional fallback (`--search-provider brave`); there is no automatic paid fallback. SearXNG is not implemented.
+
+```powershell
+python -B src/verify.py research "Has China reflown a recovered booster?" --review-only
+python -B src/verify.py research "booster reflight" --search-provider local --refresh-local-index --max-crawl-pages 12 --review-only
+```
+
+Set `TECH_RESEARCH_DATA_DIR` to an existing directory outside Git. Local discovery starts at approved registry hosts, or their optional `crawl_seeds` list, follows same-host links one level deep, and attempts at most 12 pages (configurable 1–30). Robots requests add at most one request per attempted host. Unavailable/denying robots.txt fails closed. Requests are paced, redirects remain rejected, and existing public-DNS/TLS/download protections apply. No search engine result pages are scraped.
+
+Immutable `local-index-*.json` snapshots stay in the private directory. Compatible snapshots are reused for up to 24 hours; `--refresh-local-index` forces a new crawl. Changed source policy invalidates cache reuse. Results describe this bounded index, not whole-web coverage or guaranteed current facts. Query-independent shallow crawling can miss relevant pages; add reviewed topic-specific seeds for better coverage. Selected documents are fetched again through the evidence pipeline; index text and search snippets never support verdicts.
+
+Local-provider tests cover robots denial/failure, depth/page bounds, cross-host exclusion, cache reuse/invalidation, and key-free configuration. Full suite: 68 tests, 66 passed, two Windows symlink skips. Live crawling is not yet validated. Automatic refresh does not delete old private snapshots.
