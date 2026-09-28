@@ -1,5 +1,6 @@
 """Evidence-led, human-reviewed verification; lexical retrieval never proves a claim."""
 from dataclasses import asdict
+from copy import deepcopy
 from difflib import SequenceMatcher
 import re
 from typing import Protocol
@@ -80,7 +81,7 @@ def candidates(claims, documents, limit=5):
     records = []
     for claim in claims:
         for p in search(all_passages, claim.text, limit):
-            eid = digest(claim.text + '\n' + p['passage_id'])[:24]
+            eid = digest(claim.claim_id + '\n' + claim.text + '\n' + p['passage_id'])[:24]
             records.append(EvidenceRecord(eid, claim.claim_id, p['source']['id'], p['passage'], p['location']))
     return records
 
@@ -93,6 +94,12 @@ def assess(request, claims, documents, evidence, reviews=None, failures=None, re
     valid, accepted, temporal_exclusions, invalid_reviews = [], {}, [], []
     claim_ids = {c.claim_id for c in claims}
     for e in evidence:
+        # Assessment is repeatable: caller-owned candidates and previous labels
+        # must never become an implicit review on a subsequent run.
+        e = deepcopy(e)
+        e.stance, e.evidence_strength = 'CONTEXT', 'UNREVIEWED'
+        e.normalized_passage, e.translation = None, None
+        e.status, e.notes = 'UNKNOWN', []
         if not validate_citation(e, documents, claim_ids):
             failures.append('CITATION_VALIDATION_FAILED')
             continue
@@ -108,7 +115,8 @@ def assess(request, claims, documents, evidence, reviews=None, failures=None, re
             continue
         # Trusted review file is separate from fetched source content. Require an
         # auditable binding to claim, immutable document hash, and a reviewer.
-        if (review.get('claim_id') != e.claim_id or review.get('document_hash') != source.content_hash
+        if (not isinstance(review, dict)
+                or review.get('claim_id') != e.claim_id or review.get('document_hash') != source.content_hash
                 or not review.get('reviewer') or not review.get('rationale')
                 or review.get('stance') not in STANCES or review.get('relevant') is not True
                 or review.get('strength') not in {'DIRECT', 'INDIRECT'}

@@ -182,5 +182,50 @@ class VerificationTests(unittest.TestCase):
         self.assertIn('CITATION_VALIDATION_FAILED',result['failures'])
         self.assertEqual(result['verdict'],'INSUFFICIENT_PUBLIC_EVIDENCE')
 
+    def test_repeated_claims_have_distinct_stable_evidence_ids(self):
+        claims = decompose(self.request, [self.request.text, self.request.text])
+        docs = [self.doc()]
+        evidence = candidates(claims, docs)
+        self.assertEqual(len({e.evidence_id for e in evidence}), 2)
+        self.assertEqual([e.evidence_id for e in evidence],
+                         [e.evidence_id for e in candidates(claims, docs)])
+        reviews = self.reviews(evidence, docs)
+        result = assess(self.request, claims, docs, evidence, reviews)
+        self.assertEqual(result['verdict'], 'TRUE')
+        self.assertEqual(result['invalid_review_ids'], [])
+
+    def test_reassessment_does_not_retain_or_mutate_review_labels(self):
+        docs = [self.doc()]
+        evidence = candidates(self.claims, docs)
+        reviews = self.reviews(evidence, docs, normalized_fact='Reviewed fact')
+        assess(self.request, self.claims, docs, evidence, reviews)
+        self.assertEqual(evidence[0].stance, 'CONTEXT')
+        self.assertEqual(evidence[0].notes, [])
+        # Even caller-supplied stale labels are not a substitute for a review.
+        evidence[0].stance = 'SUPPORTS'
+        evidence[0].normalized_passage = 'Stale fact'
+        result = assess(self.request, self.claims, docs, evidence)
+        self.assertEqual(result['key_evidence'][0]['stance'], 'CONTEXT')
+        self.assertIsNone(result['key_evidence'][0]['normalized_passage'])
+        self.assertEqual(result['verdict'], 'INSUFFICIENT_PUBLIC_EVIDENCE')
+
+    def test_malformed_review_is_flagged_without_verdict(self):
+        docs = [self.doc()]
+        evidence = candidates(self.claims, docs)
+        result = assess(self.request, self.claims, docs, evidence,
+                        {evidence[0].evidence_id: 'not a review object'})
+        self.assertIn('CITATION_VALIDATION_FAILED', result['failures'])
+        self.assertEqual(result['verdict'], 'INSUFFICIENT_PUBLIC_EVIDENCE')
+
+    def test_demo_cli_review_mode_withholds_verdict(self):
+        for args in [['research', '--demo'], ['verify', '--demo', '--review-only']]:
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(main(args), 0)
+            result = json.loads(output.getvalue())
+            self.assertIsNone(result['verdict'])
+            self.assertEqual(result['assessments'], [])
+            self.assertTrue(result['key_evidence'])
+
 
 if __name__=='__main__': unittest.main()

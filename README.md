@@ -16,6 +16,7 @@ Given a factual question or claim, the system is being developed to search autho
 - Dependency hints, future-publication exclusion and explicitly reviewed supersession.
 - Human-reviewed stance/scope/attribution assessments, conservative verdicts, insufficiency and unresolved conflicts.
 - Citation integrity validation, review-only mode, JSON/Markdown and private run manifests/captures.
+- Stable evidence IDs distinguish repeated atomic claims; reassessment clears stale review labels without modifying candidates.
 - Aerospace guard against treating plans, landing or recovery as routine reuse.
 
 ## In development
@@ -59,6 +60,8 @@ A reviewer binds assessments to claims and document hashes and checks relevance,
 Manual URLs are the only implemented search provider. Online runs report `CURRENT_WEB_RESEARCH_UNAVAILABLE` and `SEARCH_UNAVAILABLE` even when supplied pages fetch. Search intents are planned, not falsely recorded as issued. No search credentials are read. Live search is unverified.
 
 Baseline: 19 tests, two Windows symlink skips; synthetic Hit@5 6/6, with two unanswerable cases excluded. The upgrade adds synthetic verification/security regressions. Green tests do not establish real-world verdict accuracy. See [evaluation](docs/evaluation-plan.md).
+
+Completion audit: 42 tests, including optional PDF page extraction, pass with two Windows symlink skips. Manual NASA HTTPS fetch/HTML extraction was exercised; live search remains unavailable. Both `research --demo` and `verify --demo --review-only` withhold the verdict.
 
 ## Documentation
 

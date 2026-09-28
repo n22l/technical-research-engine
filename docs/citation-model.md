@@ -8,4 +8,6 @@ PDF uses optional pypdf with one-based physical PDF pages. Printed page numbers/
 
 Validation requires an existing claim, allowed parsed source, matching location/source IDs, an actual parsed paragraph and identical text at the stated offsets. Missing metadata stays null; invalid citations are omitted and flagged. Semantic relevance depends on separate hash-bound human review, not automated entailment.
 
+Evidence IDs bind the atomic claim ID, claim text and source passage ID. Identical text in two atomic claims therefore has distinct evidence IDs. This completion audit changes the earlier evidence-ID format: regenerate candidate reports and rebind existing private reviews before replaying them. Old review IDs fail validation rather than silently applying to different evidence. Each assessment copies candidates and resets prior interpretation fields before accepting the current reviews.
+
 Markdown reports source title/publisher/date, stance and page/section/extracted paragraph with a URL, avoiding long quotations. Exact passages stay private JSON. Synthetic URLs are invented and not expected to resolve.

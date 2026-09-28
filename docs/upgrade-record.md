@@ -9,3 +9,13 @@ Plan: preserve local code; reuse retrieval/privacy helpers; add small source/mod
 Upgrade regression: 38 tests with the same two skips; optional PDF physical-page test executed. `python -B src/verify.py verify --demo --output markdown` produced FALSE from a reviewed invented negative record. No real-world accuracy is claimed. Live search is unavailable; manual HTTPS fetching and HTML parsing were tested against NASA (214 extracted paragraphs). A live manual-URL review returned candidate evidence with no verdict; SEARCH_UNAVAILABLE remained explicit. No downloaded page was retained in Git.
 
 Weaknesses: small registry; over/under-grouped dependencies; limited decomposition; human-dependent semantic judgments; UTF-8/paragraph-layout HTML; in-process PDF parser/no OCR; no alias or translation-quality validation. No production data is required by tests.
+
+## Completion audit, 2026-09-28
+
+Started from clean feature branch at `8a38db6`, where the vertical slice was already implemented and published. Re-ran baseline: 38 tests, two skips; Hit@5 6/6. Preserved retrieval code and source-policy architecture.
+
+Fixed evidence-ID collisions for repeated atomic claims, stale review labels on reassessment, malformed review-object handling, and demo CLI review-only semantics. Added four regression tests. Evidence-ID migration requires regenerating private candidate reports and rebinding reviews; old IDs are explicitly rejected.
+
+Final validation: 42 tests, two Windows symlink skips, optional PDF physical-page extraction executed; synthetic demo returned FALSE from an explicit invented negative record; both review-only CLI paths withheld the verdict. Manual NASA homepage HTTPS fetching and parsing succeeded with 213 extracted paragraphs; content stayed in memory. No current-web search provider was configured or claimed tested. No production captures, private paths or credentials were added to Git.
+
+Commands: `python -B -m unittest discover -s tests -q`, `python -B src/research_search.py --mode demo evaluate`, `python -B src/verify.py verify --demo --output markdown`, and `git diff --check`. On this host Python was invoked using the bundled runtime because it is not on PATH.

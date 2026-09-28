@@ -16,7 +16,7 @@ from verification import ManualURLProvider, decompose, query_intents, candidates
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def demo():
+def demo(review_only=False):
     """Invented evidence, never a factual claim about an actual space program."""
     policy = SourcePolicy({'agency.example': {'allowed': True, 'tier': 1, 'type': 'government',
                                               'publisher': 'Fictional test agency'}})
@@ -33,7 +33,7 @@ def demo():
         'reviewer': 'synthetic fixture author', 'rationale': 'The invented record explicitly denies the material capability.',
         'stance': 'CONTRADICTS', 'strength': 'DIRECT', 'basis': 'observation', 'relevant': True,
         'material_scope_matches': True, 'status': 'TESTING', 'milestone': 'landing'} for e in evidence}
-    result = assess(request, claims, docs, evidence, reviews)
+    result = assess(request, claims, docs, evidence, reviews, review_only=review_only)
     result['research_scope'] = 'synthetic offline development fixture; no live search'
     return result
 
@@ -123,7 +123,7 @@ def main(argv=None):
         if args.demo:
             if args.text or args.bundle or args.policy:
                 raise SafeError('Demo cannot read production input.')
-            result = demo()
+            result = demo(review_only=args.review_only or args.command == 'research')
             print(markdown(result) if args.output == 'markdown' else json.dumps(result, ensure_ascii=False, indent=2))
             return 0
         base = private_directory()
