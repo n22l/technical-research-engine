@@ -36,8 +36,8 @@ class SourcePolicy:
         # Exact host rules win; subdomains require explicit opt-in.
         for domain, rule in sorted(self.rules.items(), key=lambda x: -len(x[0])):
             if host == domain or (rule.get('include_subdomains', False) and host.endswith('.' + domain)):
-                return dict(rule)
-        return {'allowed': False, 'tier': None, 'type': 'discovery_only', 'publisher': host}
+                return dict(rule, registered=True)
+        return {'allowed': False, 'tier': None, 'type': 'discovery_only', 'publisher': host, 'registered': False}
 
 
 class PageParser(HTMLParser):
@@ -140,7 +140,7 @@ def parse_document(url, body, media_type, policy):
     sid = digest(url + '\n' + digest(body))[:24]
     source = SourceRecord(sid, url, canonical, title, rule['publisher'], published, now(),
                           rule.get('tier'), rule['type'], language, urlsplit(url).hostname,
-                          True, digest(body), author=author,
+                          True, digest(body), author=author, jurisdiction=rule.get('jurisdiction'),
                           official=rule.get('official', False), primary_source=rule.get('primary', False))
     text, passages = '', []
     for i, (paragraph, page, heading) in enumerate(blocks, 1):
@@ -183,7 +183,7 @@ class Fetcher:
             raise ValueError('Nonpublic address')
         conn = PinnedHTTPS(p.hostname, sorted(addresses)[0], self.timeout)
         try:
-            conn.request('GET', p.path + ('?' + p.query if p.query else '') or '/',
+            conn.request('GET', (p.path or '/') + ('?' + p.query if p.query else ''),
                          headers={'User-Agent': 'TechnicalResearchEngine/0.2 (manual public-source research)',
                                   'Accept': 'text/html, application/pdf', 'Accept-Encoding': 'identity'})
             response = conn.getresponse()

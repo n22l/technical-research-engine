@@ -3,25 +3,10 @@ from dataclasses import asdict
 from copy import deepcopy
 from difflib import SequenceMatcher
 import re
-from typing import Protocol
 from urllib.parse import urlsplit
 from research_search import search
 from verification_models import AtomicClaim, EvidenceRecord, Verdict, STANCES, digest
-
-
-class SearchProvider(Protocol):
-    name: str
-    def search(self, query: str) -> list[str]: ...
-
-
-class ManualURLProvider:
-    """Explicit sources only. This is not a current-web search engine."""
-    name = 'manual_urls'
-    def __init__(self, urls):
-        self.urls = list(dict.fromkeys(urls))
-
-    def search(self, query):
-        return self.urls
+from search_discovery import SearchProvider, ManualURLProvider, query_intents
 
 
 def decompose(request, explicit=None):
@@ -31,12 +16,6 @@ def decompose(request, explicit=None):
         raise ValueError('Invalid atomic claims')
     return [AtomicClaim(f'c{i}', request.id, t, temporal_scope=request.requested_as_of_date)
             for i, t in enumerate(texts, 1)]
-
-
-def query_intents(claim):
-    return [{'intent': label, 'query': claim.text + suffix} for label, suffix in [
-        ('primary_record', ' official technical report'), ('independent_reporting', ' independent confirmation'),
-        ('newer_update', ' latest update correction'), ('contradictory_evidence', ' evidence disputed delayed')]]
 
 
 def independence_groups(documents):
@@ -143,7 +122,7 @@ def assess(request, claims, documents, evidence, reviews=None, failures=None, re
             if (old and old.claim_id == e.claim_id and old_id in accepted
                     and newer_date and older_date and newer_date > older_date
                     and r.get('strength') == 'DIRECT' and r.get('material_scope_matches') is True
-                    and r.get('basis') == 'observation' and sources[e.source_id].source_type != 'company'
+                    and r.get('basis') == 'observation' and sources[e.source_id].source_type not in {'company', 'company_official'}
                     and r.get('supersession_reason')):
                 superseded.add(old_id)
     assessments = []
@@ -157,7 +136,7 @@ def assess(request, claims, documents, evidence, reviews=None, failures=None, re
             usable = bool(sources[e.source_id].publication_date or r.get('temporal_basis'))
             usable &= r.get('material_scope_matches') is True and e.evidence_strength == 'DIRECT'
             # An announcement supports an announcement claim, not the underlying event.
-            if (r['basis'] != 'observation' or sources[e.source_id].source_type == 'company'):
+            if (r['basis'] != 'observation' or sources[e.source_id].source_type in {'company', 'company_official'}):
                 usable &= r.get('claim_is_about_announcement') is True
             if request.domain == 'aerospace' and e.stance == 'SUPPORTS':
                 from domains.aerospace.rules import capability_compatible
@@ -213,7 +192,7 @@ def markdown(result):
     q = result['request_type'] == 'QUESTION'
     safe = lambda t: re.sub(r'([\\`*_{}\[\]<>#!])', r'\\\1', str(t)).replace('\n', ' ')
     lines = ['# ' + ('Answer' if q else 'Verification'), '',
-             result['short_answer'] if q or result['review_only'] else '**' + result['verdict'] + '**', '',
+             result['short_answer'] if q or result['review_only'] or result['verdict'] is None else '**' + result['verdict'] + '**', '',
              'As of ' + result['as_of_date'] + '. ' + result['explanation'], '',
              'Scope: ' + result.get('research_scope', 'supplied documents only'), '', '## What the evidence supports', '']
     claim_text = {c['claim_id']: c['text'] for c in result['atomic_claims']}
