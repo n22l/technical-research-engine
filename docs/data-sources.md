@@ -1,3 +1,5 @@
+> Runtime update: configurable qualification is now implemented; see source-policy.md for exact host rules and verification-methodology.md for claim-specific review. The curation principles below continue to apply.
+
 # Data-source policy
 
 **Status: Source policy for future real-corpus work.** The runnable demo includes only clearly labeled synthetic fixtures; no real source collection is included. All production documents, source metadata, indexes, and outputs must remain outside the repository in an explicitly configured non-Git directory. See the [local guide](local-retrieval.md).

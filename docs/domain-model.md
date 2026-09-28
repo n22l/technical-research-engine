@@ -1,3 +1,5 @@
+> Scope: this document describes the preserved local retrieval contract. New verification records and the opt-in aerospace runtime guard are defined in verification-methodology.md and citation-model.md.
+
 # Domain model
 
 ## Current pattern

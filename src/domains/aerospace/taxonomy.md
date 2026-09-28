@@ -1,3 +1,5 @@
+> Runtime update: rules.py now validates explicit review statuses and conservatively guards against unsupported maturity implications. It does not infer status from source prose.
+
 # Aerospace milestone taxonomy
 
 **Domain-specific annotation proposal; not a core requirement or an implemented classifier.**
