@@ -44,9 +44,9 @@ Each claim produces PRIMARY_SOURCE, OFFICIAL_RECORD, INDEPENDENT_CONFIRMATION, L
 
 URLs are normalized conservatively: HTTPS only, lowercased hosts, default port and fragments removed, known tracking parameters removed. Meaningful query parameters retain ordering, repetition and encoding. Original discovered URLs remain in private provenance. Manual URLs retain their exact capture identity so existing review/capture bundles still work.
 
-The existing exact-host registry qualifies each candidate as APPROVED_EVIDENCE_SOURCE, DISCOVERY_ONLY, REJECTED or UNKNOWN. Unknown sources carry UNREGISTERED_SOURCE for policy review, even when a hostname ends in `.gov` or `.edu`. They are never fetched automatically. This milestone retains the small NASA/FAA/CNSA/SpaceX/Reuters registry; it does not claim broad coverage.
+The existing exact-host registry qualifies each candidate as APPROVED_EVIDENCE_SOURCE, DISCOVERY_ONLY, REJECTED or UNKNOWN. Unknown sources carry UNREGISTERED_SOURCE for policy review, even when a hostname ends in `.gov` or `.edu`. They are never fetched automatically. The registry is explicit and remains limited; see the local-provider section for coverage.
 
-Approved candidates are ordered by tier, primary status and API rank, with one source per publisher selected before repeats. This is a discovery heuristic, not an evidentiary-strength score. Publication dates and dependencies are evaluated after fetching; snippets do not supply either. The bounded candidate pool can miss authoritative results appearing later. The report marks truncation. No second-hop crawling or paywall bypass is performed.
+Approved candidates are ordered by tier, primary status and API rank, with one source per publisher selected before repeats. This is a discovery heuristic, not an evidentiary-strength score. Publication dates and dependencies are evaluated after fetching; snippets do not supply either. The bounded candidate pool can miss authoritative results appearing later. The report marks truncation. Provider API results do not trigger unrestricted crawling or paywall bypass.
 
 ## Failures and audit
 
@@ -64,18 +64,41 @@ No Brave key was configured during implementation, so live API integration remai
 
 ## Free local default
 
-Question-only research now defaults to `local`, a free bounded crawler and private lexical index. No API key is required. Existing bundles and explicit manual URLs retain manual behavior unless a provider is selected. Brave remains an explicit optional fallback (`--search-provider brave`); there is no automatic paid fallback. SearXNG is an optional secondary provider; see setup below.
+Local discovery uses a persistent private index capped at 500 documents, with
+at most 500 attempted pages/resources per refresh, 100 attempts per host, two
+link levels, and a 120-second scheduling budget. An in-flight network call and
+its pacing delay can finish after that budget. These are limits, not promised
+coverage. `--max-crawl-pages` accepts 1–500 and defaults to 500.
 
-```powershell
-python -B src/verify.py research "Has China reflown a recovered booster?" --review-only
-python -B src/verify.py research "booster reflight" --search-provider local --refresh-local-index --max-crawl-pages 12 --review-only
-```
+Refresh saves unfinished URLs and preserves existing entries. The next explicit
+`--refresh-local-index` (or UI refresh checkbox) continues pending discovery.
+Ordinary searches reuse the snapshot for up to 24 hours. Older documents can
+remain after failed refreshes; the UI reports stale-document and pending-URL
+counts. Discovery metadata is never evidence: selected documents are fetched
+again and require hash-bound human review before verification.
 
-Set `TECH_RESEARCH_DATA_DIR` to an existing directory outside Git. Local discovery starts at approved registry hosts, or their optional `crawl_seeds` list, follows same-host links one level deep, and attempts at most 12 pages (configurable 1–30). Robots requests add at most one request per attempted host. Unavailable/denying robots.txt fails closed. Requests are paced, redirects remain rejected, and existing public-DNS/TLS/download protections apply. No search engine result pages are scraped.
+The exact-host registry includes NASA, FAA, CNSA, SpaceX, Reuters, ESA and JAXA.
+NASA missions, ESA Space Transportation and JAXA rockets are topic starting
+pages. Local configuration can add `crawl_seeds`, `sitemaps`, and `feeds` URL
+lists to source-policy rules. Robots-advertised sitemaps are discovered
+automatically. Sitemap indexes, URL sets, RSS and Atom are supported, limited
+to approved same-host URLs, five discovery feeds per host per refresh, and a
+3,000-URL saved frontier. XML DTDs/entities and non-UTF-8 XML are rejected.
 
-Immutable `local-index-*.json` snapshots stay in the private directory. Compatible snapshots are reused for up to 24 hours; `--refresh-local-index` forces a new crawl. Changed source policy invalidates cache reuse. Results describe this bounded index, not whole-web coverage or guaranteed current facts. Query-independent shallow crawling can miss relevant pages; add reviewed topic-specific seeds for better coverage. Selected documents are fetched again through the evidence pipeline; index text and search snippets never support verdicts.
+Robots restrictions, crawl delays, pinned public HTTPS fetching, no redirects,
+byte limits and source-policy checks remain enforced. Discovery XML is limited
+to two megabytes. Index snapshots use validated external private storage only;
+old schema snapshots are ignored rather than altered.
 
-Local-provider tests cover robots denial/failure, depth/page bounds, cross-host exclusion, cache reuse/invalidation, and key-free configuration. Full suite: 70 tests, 68 passed, two Windows symlink skips. On 2026-09-29, a live NASA integration indexed and refetched two pages, produced five evidence candidates, reused its cache, and withheld the verdict. This verifies plumbing, not search coverage or factual accuracy. Automatic refresh does not delete old private snapshots.
+Ranking weights rare query terms, title matches, phrase matches and query-term
+coverage. Repetition has a capped contribution. Obvious HTML navigation,
+headers, footers and scripts are removed from the discovery text only; original
+evidence/captures and citation offsets remain untouched. This is lexical
+ranking, not semantic proof or a guarantee of relevance.
+
+The expanded-index suite includes deterministic sitemap/feed, resume, robots,
+time-budget, failed-refresh retention, bounds and ranking checks. Live coverage
+is constrained by each publisher's robots policy and network availability.
 
 ## Optional SearXNG secondary provider
 
@@ -93,3 +116,5 @@ No search API key or automatic paid fallback is used. SearXNG hosting and its up
 Each query makes at most one request, paced at one per second with a 15-second socket timeout and two-megabyte response cap. Only the first requested number of results is retained; no pagination or retries occur. Authentication/JSON-disabled (401/403), rate-limit (429), malformed response, unavailable engines, and other errors are explicit process failures. Even partial upstream-engine outages suppress a factual verdict. Missing configuration returns SEARCH_UNAVAILABLE. Results are still filtered by the existing evidence policy; snippets never become evidence.
 
 The endpoint and aggregate upstream failure count are recorded under `search.provider_details`. Tests cover API shape, failure mapping, DNS/redirect/download controls and end-to-end snippet isolation. No instance was configured during development, so live SearXNG integration remains unverified. Local search remains the default and Brave is still an explicitly selected fallback.
+
+Expanded-index live check: a three-attempt NASA missions crawl indexed three documents, returned results, and preserved 139 pending URLs. This checks crawl/index integration, not factual accuracy or broad coverage.

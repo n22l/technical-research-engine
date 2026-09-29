@@ -143,7 +143,7 @@ def main(argv=None):
         parser.add_argument('--question-file', help='UTF-8 filename relative to external private directory')
         parser.add_argument('--url', action='append', default=[], help='Manual public source URL; repeatable')
         parser.add_argument('--search-provider', choices=['local', 'manual', 'brave', 'searxng'])
-        parser.add_argument('--max-crawl-pages', type=int, default=12)
+        parser.add_argument('--max-crawl-pages', type=int, default=500)
         parser.add_argument('--refresh-local-index', action='store_true')
         parser.add_argument('--policy', help='Policy filename relative to external private directory')
         parser.add_argument('--max-sources', type=int, default=8)

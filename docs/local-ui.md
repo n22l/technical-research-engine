@@ -117,3 +117,11 @@ After Export, the UI retains a Download report link for browsers that block the
 automatic download. The link remains until another export or result render;
 unused blob URLs are released when replaced. Exported files remain private and
 must not be committed.
+
+## Expanded free index
+
+Use Research options → Refresh local source index to build or extend the private
+500-document index. Each refresh has a two-minute scheduling budget; pending
+URLs resume on the next refresh. Research summaries show indexed hosts,
+pending URLs and stale-document counts. A first refresh does not guarantee
+500 documents. See [crawler configuration](automatic-web-search.md#free-local-default).
