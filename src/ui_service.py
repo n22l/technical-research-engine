@@ -96,7 +96,8 @@ class Application:
                    'parsed': len(r['sources']), 'evidence': len(r['key_evidence']),
                    'provider': search['provider'], 'status': search['status'],
                    'indexed_at': local.get('indexed_at'), 'indexed_pages': local.get('indexed_pages'),
-                   'cache_used': local.get('cache_used'),
+                   'cache_used': local.get('cache_used'), 'pending_urls': local.get('pending_urls', 0),
+                   'stale_pages': local.get('stale_pages', 0), 'index_hosts': local.get('hosts', []),
                    'hosts': sorted({s['domain'] for s in r['sources']})}
         parsed_urls = {source['url'] for source in r['sources']}
         events = r.get('run_manifest', {}).get('events', [])

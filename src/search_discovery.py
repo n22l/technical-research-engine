@@ -116,7 +116,7 @@ class BraveSearchProvider:
             conn.close()
 
 
-def configured_provider(name=None, *, base=None, policy=None, max_pages=12, refresh=False):
+def configured_provider(name=None, *, base=None, policy=None, max_pages=500, refresh=False):
     name = name if name is not None else os.environ.get('TECH_RESEARCH_SEARCH_PROVIDER', 'local')
     if name == 'local':
         if base is None or policy is None:
