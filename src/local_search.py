@@ -81,7 +81,9 @@ class LocalSearchProvider:
             attempts += 1  # Includes blocked/failed pages: always bounded.
             if host not in robots:
                 try:
-                    body, _ = fetcher.fetch('https://' + host + '/robots.txt')
+                    body, media = fetcher.fetch('https://' + host + '/robots.txt')
+                    if media != 'text/plain':
+                        raise ValueError('Robots response is not plain text')
                     parser = RobotFileParser()
                     parser.parse(body.decode('utf-8', errors='strict').splitlines())
                     robots[host] = parser

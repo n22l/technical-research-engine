@@ -1,13 +1,13 @@
 # Automatic web discovery
 
-Discovery is implemented with the documented [Brave Web Search API](https://api-dashboard.search.brave.com/api-reference/web/search/get), using HTTPS GET `/res/v1/web/search`. Only fetched and parsed documents can become evidence. API titles, descriptions, summaries and snippets are never evidence.
+Discovery defaults to a free local crawler/index (see below). Optional external discovery uses the documented [Brave Web Search API](https://api-dashboard.search.brave.com/api-reference/web/search/get), using HTTPS GET `/res/v1/web/search`. Only fetched and parsed documents can become evidence. API titles, descriptions, summaries and snippets are never evidence.
 
 ## Configuration and first run
 
 Python 3.10+ and Git are required; the search adapter uses the standard library. Set these environment variables in the process running the engine:
 
 - `TECH_RESEARCH_DATA_DIR`: an existing private directory outside every Git checkout.
-- `TECH_RESEARCH_SEARCH_PROVIDER=brave`: enables API discovery. Default is `manual`.
+- `TECH_RESEARCH_SEARCH_PROVIDER=brave`: enables API discovery. Question-only input defaults to `local`; existing bundles/manual URLs default to `manual`.
 - `BRAVE_SEARCH_API_KEY`: your Brave subscription token. Supply it through your environment or secret manager; do not paste it into a committed file or shell history. The engine reads only this named variable, sends it in the authentication header, and never persists it.
 
 No dotenv file is loaded, and no credentials are searched for. API calls transmit generated research queries to Brave; `--question-file` avoids shell history, not disclosure to the configured search provider. Use `--offline` for local-only research.
@@ -75,4 +75,4 @@ Set `TECH_RESEARCH_DATA_DIR` to an existing directory outside Git. Local discove
 
 Immutable `local-index-*.json` snapshots stay in the private directory. Compatible snapshots are reused for up to 24 hours; `--refresh-local-index` forces a new crawl. Changed source policy invalidates cache reuse. Results describe this bounded index, not whole-web coverage or guaranteed current facts. Query-independent shallow crawling can miss relevant pages; add reviewed topic-specific seeds for better coverage. Selected documents are fetched again through the evidence pipeline; index text and search snippets never support verdicts.
 
-Local-provider tests cover robots denial/failure, depth/page bounds, cross-host exclusion, cache reuse/invalidation, and key-free configuration. Full suite: 68 tests, 66 passed, two Windows symlink skips. Live crawling is not yet validated. Automatic refresh does not delete old private snapshots.
+Local-provider tests cover robots denial/failure, depth/page bounds, cross-host exclusion, cache reuse/invalidation, and key-free configuration. Full suite: 70 tests, 68 passed, two Windows symlink skips. On 2026-09-29, a live NASA integration indexed and refetched two pages, produced five evidence candidates, reused its cache, and withheld the verdict. This verifies plumbing, not search coverage or factual accuracy. Automatic refresh does not delete old private snapshots.

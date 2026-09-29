@@ -1,4 +1,4 @@
-import sys, unittest, tempfile, json
+import sys, unittest, tempfile, json, os
 from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
@@ -45,5 +45,31 @@ class LocalTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, patch.dict('os.environ', {}, clear=True):
             provider = configured_provider(base=Path(tmp), policy=self.policy)
             self.assertEqual(provider.name, 'local')
+
+    def test_html_robots_error_page_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp, patch('local_search.time.sleep'), patch('local_search.Fetcher.fetch', return_value=(b'<html>Error</html>', 'text/html')) as fetch:
+            with self.assertRaises(SearchError):
+                LocalSearchProvider(Path(tmp), self.policy).search('booster')
+            self.assertEqual(fetch.call_count, 1)
+
+    def test_question_only_cli_uses_local_and_keeps_passages_private(self):
+        import contextlib
+        import io
+        from verify import main
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            (base / 'policy.json').write_text(json.dumps({'sources': self.policy.rules}))
+            out = io.StringIO()
+            with patch.dict('os.environ', {'TECH_RESEARCH_DATA_DIR': tmp}), \
+                 patch('local_search.time.sleep'), patch('verify.time.sleep'), \
+                 patch('web_sources.Fetcher.fetch', side_effect=self.fetch), contextlib.redirect_stdout(out):
+                os.environ.pop('TECH_RESEARCH_SEARCH_PROVIDER', None)
+                self.assertEqual(main(['research', 'booster reflight', '--policy', 'policy.json', '--max-crawl-pages', '2']), 0)
+            report = json.loads(next(base.glob('result-*.json')).read_text(encoding='utf-8'))
+            self.assertEqual(report['search']['provider'], 'local')
+            self.assertTrue(report['search']['local_index']['indexed_pages'])
+            self.assertTrue(report['key_evidence'])
+            self.assertIsNone(report['verdict'])
+            self.assertNotIn('Booster reflight record.', out.getvalue())
 
 if __name__ == '__main__': unittest.main()

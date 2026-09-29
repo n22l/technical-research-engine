@@ -4,7 +4,7 @@
 
 Given a factual question or claim, the system is being developed to search authoritative public sources, retrieve supporting and contradicting evidence, compare source differences, and produce a concise answer or verification judgment with traceable citations.
 
-**Current stage: local retrieval, automatic source discovery, and human-reviewed verification.** A Brave Web Search API adapter is implemented and mock-tested; live API integration remains unverified without credentials. No LLM is required. Retrieved text cannot instruct the engine or generate its own review labels.
+**Current stage: local retrieval, automatic source discovery, and human-reviewed verification.** The default free local crawler/index has passed a bounded live NASA integration. Brave remains an optional adapter; its live API integration is unverified without credentials. No LLM is required. Retrieved text cannot instruct the engine or generate its own review labels.
 
 ## Implemented now
 
@@ -58,7 +58,7 @@ A reviewer binds assessments to claims and document hashes and checks relevance,
 
 ## Search and evaluation status
 
-Automatic discovery uses the documented Brave Web Search API. Set `TECH_RESEARCH_SEARCH_PROVIDER=brave` and supply `BRAVE_SEARCH_API_KEY` through the process environment. No credentials are discovered or stored. Existing manual/offline workflows require no API key. Missing configuration reports SEARCH_UNAVAILABLE; API errors withhold automatic verdicts. Live search remains unverified because no key was available.
+Question-only discovery defaults to the free local authoritative-site index. For optional Brave discovery, set `TECH_RESEARCH_SEARCH_PROVIDER=brave` and supply `BRAVE_SEARCH_API_KEY` through the process environment. No credentials are discovered or stored. Existing manual/offline workflows require no API key. Missing configuration reports SEARCH_UNAVAILABLE; API errors withhold automatic verdicts. Live search remains unverified because no key was available.
 
 ```powershell
 python -B src/verify.py research "Has China reflown a recovered orbital-class booster?" --search-provider brave --domain aerospace --review-only
@@ -81,4 +81,4 @@ The first application is Aerospace Intelligence for US–China Space Watch / 中
 
 ## Free local discovery default
 
-Question-only research defaults to a bounded approved-site crawler/index with no API key. Use an external `TECH_RESEARCH_DATA_DIR`, then run `python -B src/verify.py research "booster reflight" --review-only`. The private index is reused for up to 24 hours; use `--refresh-local-index` to refresh. Coverage is limited to approved seeds and shallow links, not the entire web. Brave remains explicitly selectable as an optional fallback; paid fallback is never automatic. Existing manual/offline modes remain supported. See [configuration and limits](docs/automatic-web-search.md#free-local-default). Tests: 66 passed, two skipped; live crawling remains unverified. Optional SearXNG is deferred.
+Question-only research defaults to a bounded approved-site crawler/index with no API key. Use an external `TECH_RESEARCH_DATA_DIR`, then run `python -B src/verify.py research "booster reflight" --review-only`. The private index is reused for up to 24 hours; use `--refresh-local-index` to refresh. Coverage is limited to approved seeds and shallow links, not the entire web. Brave remains explicitly selectable as an optional fallback; paid fallback is never automatic. Existing manual/offline modes remain supported. See [configuration and limits](docs/automatic-web-search.md#free-local-default). Tests: 68 passed, two skipped. A live NASA run indexed and refetched two pages, produced five evidence candidates, reused its private cache, and withheld the verdict for review. Optional SearXNG is deferred.
