@@ -64,7 +64,7 @@ No Brave key was configured during implementation, so live API integration remai
 
 ## Free local default
 
-Question-only research now defaults to `local`, a free bounded crawler and private lexical index. No API key is required. Existing bundles and explicit manual URLs retain manual behavior unless a provider is selected. Brave remains an explicit optional fallback (`--search-provider brave`); there is no automatic paid fallback. SearXNG is not implemented.
+Question-only research now defaults to `local`, a free bounded crawler and private lexical index. No API key is required. Existing bundles and explicit manual URLs retain manual behavior unless a provider is selected. Brave remains an explicit optional fallback (`--search-provider brave`); there is no automatic paid fallback. SearXNG is an optional secondary provider; see setup below.
 
 ```powershell
 python -B src/verify.py research "Has China reflown a recovered booster?" --review-only
@@ -76,3 +76,20 @@ Set `TECH_RESEARCH_DATA_DIR` to an existing directory outside Git. Local discove
 Immutable `local-index-*.json` snapshots stay in the private directory. Compatible snapshots are reused for up to 24 hours; `--refresh-local-index` forces a new crawl. Changed source policy invalidates cache reuse. Results describe this bounded index, not whole-web coverage or guaranteed current facts. Query-independent shallow crawling can miss relevant pages; add reviewed topic-specific seeds for better coverage. Selected documents are fetched again through the evidence pipeline; index text and search snippets never support verdicts.
 
 Local-provider tests cover robots denial/failure, depth/page bounds, cross-host exclusion, cache reuse/invalidation, and key-free configuration. Full suite: 70 tests, 68 passed, two Windows symlink skips. On 2026-09-29, a live NASA integration indexed and refetched two pages, produced five evidence candidates, reused its cache, and withheld the verdict. This verifies plumbing, not search coverage or factual accuracy. Automatic refresh does not delete old private snapshots.
+
+## Optional SearXNG secondary provider
+
+The adapter uses SearXNG's documented [JSON Search API](https://docs.searxng.org/dev/search_api.html), sending GET requests to `/search` with `q`, `format=json`, `categories=general`, and `pageno=1`. Configure an instance you operate or are authorized to use; the engine does not select public instances or install a server automatically. JSON output must be enabled in the instance's `search.formats`; many public instances disable it and return HTTP 403.
+
+```powershell
+$env:TECH_RESEARCH_SEARXNG_URL = 'https://your-search-host.example'
+python -B src/verify.py research "booster reflight" --search-provider searxng --review-only
+```
+
+Replace the example with your real HTTPS instance base URL. Optional URL path prefixes are supported. This version requires public HTTPS on port 443 with standard TLS validation: loopback/private-network endpoints, embedded credentials, query/fragment configuration, and redirects are rejected. It does not weaken the document fetcher's SSRF protections to support local HTTP instances. An explicitly configured instance has transport permission only; it never becomes an approved evidence publisher.
+
+No search API key or automatic paid fallback is used. SearXNG hosting and its upstream engines may have costs or restrictions. Generated queries are shared with the configured instance and its upstream engines; no guarantees of availability, privacy, or search coverage are implied by the adapter.
+
+Each query makes at most one request, paced at one per second with a 15-second socket timeout and two-megabyte response cap. Only the first requested number of results is retained; no pagination or retries occur. Authentication/JSON-disabled (401/403), rate-limit (429), malformed response, unavailable engines, and other errors are explicit process failures. Even partial upstream-engine outages suppress a factual verdict. Missing configuration returns SEARCH_UNAVAILABLE. Results are still filtered by the existing evidence policy; snippets never become evidence.
+
+The endpoint and aggregate upstream failure count are recorded under `search.provider_details`. Tests cover API shape, failure mapping, DNS/redirect/download controls and end-to-end snippet isolation. No instance was configured during development, so live SearXNG integration remains unverified. Local search remains the default and Brave is still an explicitly selected fallback.

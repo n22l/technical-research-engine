@@ -112,6 +112,8 @@ def research(request, policy, urls, base, offline=False, captures=None, reviews=
         result.update(verdict=None, assessments=[], short_answer='Current web discovery failed; candidate evidence requires review.')
         result['failures'] = [f for f in result['failures'] if f != 'INSUFFICIENT_EVIDENCE']
     scope = ('supplied local captures only' if offline else
+             'bounded approved-site local index; may be cached up to 24 hours; human review required'
+             if search_provider is not None and search_provider.name == 'local' else
              'automatic web discovery plus supplied URLs; human review required' if automatic else
              'manual public URLs only; current web search unavailable')
     result.update(research_scope=scope, search=discovery,
@@ -140,7 +142,7 @@ def main(argv=None):
         parser.add_argument('--bundle', help='JSON filename relative to external private directory')
         parser.add_argument('--question-file', help='UTF-8 filename relative to external private directory')
         parser.add_argument('--url', action='append', default=[], help='Manual public source URL; repeatable')
-        parser.add_argument('--search-provider', choices=['local', 'manual', 'brave'])
+        parser.add_argument('--search-provider', choices=['local', 'manual', 'brave', 'searxng'])
         parser.add_argument('--max-crawl-pages', type=int, default=12)
         parser.add_argument('--refresh-local-index', action='store_true')
         parser.add_argument('--policy', help='Policy filename relative to external private directory')
