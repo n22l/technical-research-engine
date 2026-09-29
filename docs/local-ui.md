@@ -90,3 +90,30 @@ was displayed as literal text. This tests the workflow, not real-world accuracy.
 The browser download-event check timed out; both export responses were verified
 through HTTP integration tests. No private source material or screenshots are
 committed.
+
+## Repeatable browser regression
+
+Start the isolated fixture server from the repository root:
+
+```powershell
+python -B tests/ui_smoke_server.py
+```
+
+This server uses port 8001, a temporary external directory, an invented source,
+and stubbed discovery/fetching. It does not read production research or call
+external providers. Stop with Ctrl+C; restart it before each complete test.
+
+In Codex's initialized browser tool, open http://127.0.0.1:8001 and bind that tab
+to `tab`. Paste the function from `tests/ui_browser_smoke.js` into cua_repl,
+then call `nodeRepl.write(await browserSmoke(tab))`. Do not evaluate it in the
+webpage's console: it uses the browser automation API, not page JavaScript.
+The script checks the review gate, inert source text, saved review, expected
+fictional verdict, both export blob links and filenames, and history reopening.
+It passed against the synthetic server. Export payload content is covered by
+the Python HTTP tests. Browser download-manager/OS file persistence is not
+asserted by this script.
+
+After Export, the UI retains a Download report link for browsers that block the
+automatic download. The link remains until another export or result render;
+unused blob URLs are released when replaced. Exported files remain private and
+must not be committed.
