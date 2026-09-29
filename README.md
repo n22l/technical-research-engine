@@ -26,7 +26,18 @@ Semantic verification depends on human annotations. Source qualification, depend
 
 ## Planned
 
-Live search integration validation, evaluated semantic interpretation, substantive answer synthesis, held-out verification benchmarks, evidence-backed entity aliases, translation evaluation, cross-language retrieval and OCR. No frontend or cloud deployment is required.
+Live search integration validation, evaluated semantic interpretation, substantive answer synthesis, held-out verification benchmarks, evidence-backed entity aliases, translation evaluation, cross-language retrieval and OCR. Cloud deployment is not required. A local browser interface is available.
+
+## Local Web UI
+
+Start the private browser workflow with `python -B src/ui.py`, then open
+http://127.0.0.1:8000. Set `TECH_RESEARCH_DATA_DIR` to an existing external,
+non-Git directory first. The UI supports research, source inspection, human
+review, verification, private history, and JSON/Markdown export. Local search
+is the default; Brave and SearXNG require explicit selection.
+Enter a question → Research → Review evidence → Verify → Read/export.
+Automatic source discovery does not eliminate human evidence review.
+See [local UI setup and workflow](docs/local-ui.md).
 
 ## Run
 
