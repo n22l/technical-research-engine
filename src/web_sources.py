@@ -169,9 +169,17 @@ class PinnedHTTPS(http.client.HTTPSConnection):
             raise
 
 
+class FetchError(ValueError):
+    """HTTP status only; never response bodies or credentials."""
+    def __init__(self, status):
+        super().__init__('FETCH_FAILED')
+        self.status = status
+
+
 class Fetcher:
-    def __init__(self, policy, max_bytes=4_000_000, timeout=15):
+    def __init__(self, policy, max_bytes=4_000_000, timeout=15, accept='text/html, application/pdf'):
         self.policy, self.max_bytes, self.timeout = policy, max_bytes, timeout
+        self.accept = accept
 
     def fetch(self, url):
         # No redirects, proxies, cookies, authentication, or automatic retries.
@@ -185,9 +193,11 @@ class Fetcher:
         try:
             conn.request('GET', (p.path or '/') + ('?' + p.query if p.query else ''),
                          headers={'User-Agent': 'TechnicalResearchEngine/0.2 (manual public-source research)',
-                                  'Accept': 'text/html, application/pdf', 'Accept-Encoding': 'identity'})
+                                  'Accept': self.accept, 'Accept-Encoding': 'identity'})
             response = conn.getresponse()
-            if response.status != 200 or response.getheader('Content-Encoding', 'identity') != 'identity':
+            if response.status != 200:
+                raise FetchError(response.status)
+            if response.getheader('Content-Encoding', 'identity') != 'identity':
                 raise ValueError('FETCH_FAILED')
             if int(response.getheader('Content-Length', '0')) > self.max_bytes:
                 raise ValueError('Oversized response')

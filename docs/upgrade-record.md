@@ -29,3 +29,15 @@ Added a documented Brave Web Search API adapter, structured results, bounded det
 No Brave API key was available in the documented environment variable. Live search was not performed and remains unverified; tests mock the provider and HTTP contract. No credentials, production captures or search responses are committed. Search snapshots and fetched documents are written only to validated external private directories. See the automatic-search guide for configuration and cost bounds.
 
 Validation: 64 tests, 62 passed, the same two Windows symlink skips, zero failures. Retrieval Hit@5 remains 6/6. A synthetic discovery run issued five mock queries, selected and parsed two approved sources, retrieved two candidate passages, identified one dependency hint and withheld the verdict. Full-suite command: `python -B -m unittest discover -s tests -q`; retrieval command: `python -B src/research_search.py --mode demo evaluate`. The public demo remains functional; no live-search result is claimed.
+
+## Local crawler validation, 2026-09-29
+
+Resumed saved commit `434c5a6` after included usage reset. Baseline: 68 tests with two skips. Hardened robots response validation to reject HTML error pages; added a question-only CLI regression proving local is the default and evidence stays private. Final suite: 70 tests, 68 passed, two Windows symlink skips, no failures.
+
+Live NASA test: two pages indexed, two selected documents fetched/parsed, five candidate passages, no final verdict, and subsequent private index reuse confirmed. Test captures/index lived in an external temporary directory and were not committed. Review-only reports still include INSUFFICIENT_EVIDENCE until human assessments are supplied. This is an integration check, not validation of whole-web coverage or factual accuracy. Optional SearXNG remains deferred; Brave remains an explicitly selected fallback with no automatic API spending.
+
+## Optional SearXNG completion, 2026-09-29
+
+Added an explicitly configured SearXNG JSON API adapter using the existing pinned public-HTTPS transport. Default local discovery and optional Brave are preserved. The instance transport policy is separate from evidence policy. No private addresses, credentials in URLs, redirects, pagination or retries are permitted. Search snippets and incomplete upstream responses cannot establish verdicts.
+
+Validation: 78 tests, 76 passed, two Windows symlink skips. New synthetic tests cover query encoding, bounded result mapping, unsafe configuration and DNS, HTTP errors, oversized responses, redirects, engine outages and discovery-to-evidence separation. No SearXNG endpoint was configured; live integration remains unverified. No private index, source capture or credential is included in Git.

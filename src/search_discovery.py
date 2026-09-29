@@ -116,12 +116,20 @@ class BraveSearchProvider:
             conn.close()
 
 
-def configured_provider(name=None):
-    name = name if name is not None else os.environ.get('TECH_RESEARCH_SEARCH_PROVIDER', 'manual')
+def configured_provider(name=None, *, base=None, policy=None, max_pages=12, refresh=False):
+    name = name if name is not None else os.environ.get('TECH_RESEARCH_SEARCH_PROVIDER', 'local')
+    if name == 'local':
+        if base is None or policy is None:
+            raise SearchError('SEARCH_UNAVAILABLE')
+        from local_search import LocalSearchProvider
+        return LocalSearchProvider(base, policy, max_pages, refresh)
     if name == 'manual':
         return None
     if name == 'brave':
         return BraveSearchProvider(os.environ.get('BRAVE_SEARCH_API_KEY'))
+    if name == 'searxng':
+        from searxng_search import SearXNGProvider
+        return SearXNGProvider(os.environ.get('TECH_RESEARCH_SEARXNG_URL'))
     raise SearchError('SEARCH_UNAVAILABLE')
 
 
@@ -246,6 +254,10 @@ def discover(claims, policy, manual_urls, provider=None, *, domain=None, offline
     elif not offline:
         report['failures'].append('SEARCH_UNAVAILABLE')
     report['candidates'] = list(by_url.values())
+    if provider and hasattr(provider, 'audit'):
+        report['provider_details'] = provider.audit
+        if provider.name == 'local':
+            report['local_index'] = provider.audit
     eligible = [c for c in by_url.values() if c['source_policy_status'] == 'APPROVED_EVIDENCE_SOURCE']
     # Prefer tier/primary status, then diversify publishers before taking repeats.
     eligible.sort(key=lambda c: (c['source_tier'] or 99, not c['primary'], c['provider_rank']))

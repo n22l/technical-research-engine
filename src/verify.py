@@ -112,6 +112,8 @@ def research(request, policy, urls, base, offline=False, captures=None, reviews=
         result.update(verdict=None, assessments=[], short_answer='Current web discovery failed; candidate evidence requires review.')
         result['failures'] = [f for f in result['failures'] if f != 'INSUFFICIENT_EVIDENCE']
     scope = ('supplied local captures only' if offline else
+             'bounded approved-site local index; may be cached up to 24 hours; human review required'
+             if search_provider is not None and search_provider.name == 'local' else
              'automatic web discovery plus supplied URLs; human review required' if automatic else
              'manual public URLs only; current web search unavailable')
     result.update(research_scope=scope, search=discovery,
@@ -140,7 +142,9 @@ def main(argv=None):
         parser.add_argument('--bundle', help='JSON filename relative to external private directory')
         parser.add_argument('--question-file', help='UTF-8 filename relative to external private directory')
         parser.add_argument('--url', action='append', default=[], help='Manual public source URL; repeatable')
-        parser.add_argument('--search-provider', choices=['manual', 'brave'])
+        parser.add_argument('--search-provider', choices=['local', 'manual', 'brave', 'searxng'])
+        parser.add_argument('--max-crawl-pages', type=int, default=12)
+        parser.add_argument('--refresh-local-index', action='store_true')
         parser.add_argument('--policy', help='Policy filename relative to external private directory')
         parser.add_argument('--max-sources', type=int, default=8)
         parser.add_argument('--max-queries', type=int, default=8)
@@ -170,10 +174,13 @@ def main(argv=None):
                                   language=args.language, domain=args.domain)
         policy = SourcePolicy.load(safe_file(base, args.policy) if args.policy else ROOT / 'config/source-policy.json')
         provider, configuration_error = None, None
-        provider_name = args.search_provider or os.environ.get('TECH_RESEARCH_SEARCH_PROVIDER', 'manual')
+        # Preserve existing bundle/manual URL behavior unless a provider is selected.
+        default_provider = 'manual' if args.bundle or args.url else 'local'
+        provider_name = args.search_provider or os.environ.get('TECH_RESEARCH_SEARCH_PROVIDER', default_provider)
         if not args.offline:
             try:
-                provider = configured_provider(provider_name)
+                provider = configured_provider(provider_name, base=base, policy=policy,
+                                               max_pages=args.max_crawl_pages, refresh=args.refresh_local_index)
             except SearchError as exc:
                 configuration_error = exc.code
         urls = bundle.get('urls', []) + args.url

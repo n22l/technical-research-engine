@@ -38,3 +38,4 @@ secrets/
 capture-*.bin
 run-*.json
 reviewed.json
+local-index-*.json
