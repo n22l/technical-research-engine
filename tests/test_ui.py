@@ -76,30 +76,28 @@ class UITests(unittest.TestCase):
         self.assertEqual(selected[0]['status'], 'Retrieval unavailable')
         self.assertFalse(state['can_verify'])
 
-    def test_manual_urls_require_input_and_never_need_search_provider(self):
-        with self.assertRaisesRegex(UIError, 'at least one source URL'):
-            self.app.start({'text': 'Test booster reflight', 'provider': 'manual', 'urls': []})
+    def test_legacy_manual_option_searches_approved_sources_with_optional_urls(self):
         body = b'<title>Test booster</title><meta name="date" content="2026-01-01"><p>Test booster reflight occurred.</p>'
-        def manual_provider(name, **kwargs):
-            self.assertEqual(name, 'manual')
-            return None
-        with patch('ui_service.configured_provider', side_effect=manual_provider), \
-             patch('verify.Fetcher.fetch', return_value=(body, 'text/html')), patch('verify.time.sleep'):
-            job = self.app.start({'text': 'Test booster reflight occurred.', 'provider': 'manual',
-                                  'urls': ['https://agency.example/record']})
-            for _ in range(300):
-                status = self.app.job(job['job_id'])
-                if status['status'] != 'running':
-                    break
-                threading.Event().wait(.01)
-            self.assertEqual(status['status'], 'complete')
-            state = self.app.view(status['run_id'])
-        self.assertEqual(state['result']['search']['status'], 'MANUAL_URLS_ONLY')
-        self.assertEqual(state['result']['search']['queries'], 0)
-        self.assertNotIn('SEARCH_UNAVAILABLE', state['result']['failures'])
-        self.assertTrue(state['result']['key_evidence'])
-        reviewed = self.app.save_review(state['id'], self.review(state))
-        self.assertEqual(self.app.verify(state['id'], reviewed['revision'])['final']['verdict'], 'TRUE')
+        for urls in ([], ['https://agency.example/extra']):
+            with self.subTest(urls=urls), patch('ui_service.configured_provider', return_value=Provider()) as factory, \
+                 patch('verify.Fetcher.fetch', return_value=(body, 'text/html')), patch('verify.time.sleep'):
+                job = self.app.start({'text': 'Test booster reflight occurred.', 'provider': 'manual', 'urls': urls})
+                for _ in range(300):
+                    status = self.app.job(job['job_id'])
+                    if status['status'] != 'running':
+                        break
+                    threading.Event().wait(.01)
+                self.assertEqual(status['status'], 'complete')
+                self.assertEqual(factory.call_args.args[0], 'local')
+                state = self.app.view(status['run_id'])
+            self.assertEqual(state['result']['search']['status'], 'SEARCH_COMPLETE')
+            self.assertEqual(state['result']['search']['provider'], 'local')
+            self.assertGreater(state['result']['search']['queries'], 0)
+            selected = {source['url'] for source in state['result']['sources']}
+            self.assertIn('https://agency.example/record', selected)
+            if urls:
+                self.assertIn(urls[0], selected)
+            self.assertNotIn('SEARCH_UNAVAILABLE', state['result']['failures'])
 
     def test_failed_automatic_provider_with_urls_still_reports_failure(self):
         with patch('ui_service.configured_provider', side_effect=SearchError('SEARCH_UNAVAILABLE')), \
