@@ -94,6 +94,10 @@ def create_server(port=8000, application=None):
                     return self.send(app.suggest_source(values), 201)
                 if self.path == '/api/source-decisions':
                     return self.send(app.decide_source(values))
+                if self.path == '/api/history-delete':
+                    if type(values.get('deleted')) is not bool:
+                        raise UIError('Choose delete or restore.')
+                    return self.send(app.set_history_deleted(values.get('run_id', ''), values['deleted']))
                 if self.path == '/api/research':
                     return self.send(app.start(values), 202)
                 if self.path == '/api/review':
