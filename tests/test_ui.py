@@ -244,6 +244,14 @@ class UITests(unittest.TestCase):
         response = conn.getresponse(); html = response.read().decode()
         self.assertEqual(response.status, 200)
         self.assertIn('Ask a question', html)
+        for asset in ['/app.js', '/style.css']:
+            conn.request('GET', asset)
+            asset_response = conn.getresponse()
+            self.assertEqual(asset_response.status, 200)
+            asset_text = asset_response.read().decode('utf-8')
+            if asset == '/app.js':
+                self.assertIn('/api/history-delete', asset_text)
+                self.assertIn('Show deleted history', asset_text)
         self.assertIn("frame-ancestors 'none'", response.getheader('Content-Security-Policy'))
         token = re.search(r'name="ui-token" content="([^"]+)"', html).group(1)
         for path in ['/capture-abc.bin', '/../README.md', '/static/capture-abc.bin']:
