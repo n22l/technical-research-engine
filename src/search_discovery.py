@@ -251,6 +251,8 @@ def discover(claims, policy, manual_urls, provider=None, *, domain=None, offline
                 break  # Avoid repeated authentication failures or API charges.
         if report['status'] == 'SEARCH_COMPLETE' and not report['results_returned']:
             report['failures'].append('SEARCH_NO_RESULTS')
+    elif not offline and manual_urls:
+        report['status'] = 'MANUAL_URLS_ONLY'
     elif not offline:
         report['failures'].append('SEARCH_UNAVAILABLE')
     report['candidates'] = list(by_url.values())

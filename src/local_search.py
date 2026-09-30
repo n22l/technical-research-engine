@@ -4,7 +4,6 @@ from collections import Counter, deque
 import io
 from html.parser import HTMLParser
 import json
-import math
 import os
 import time
 import uuid
@@ -12,12 +11,12 @@ import xml.etree.ElementTree as ET
 from urllib.parse import urlsplit, urljoin
 from urllib.robotparser import RobotFileParser
 
-from research_search import external_directory, safe_file, tokens
+from research_search import external_directory, safe_file, keyword_scores
 from search_discovery import SearchResult, SearchError, normalize_url
 from verification_models import digest, now
 from web_sources import Fetcher, parse_document
 
-STOP = set('a an the is are was were has have had do does did what when where which who how of to in on at for and or with by from current latest evidence official source confirm contradict verify'.split())
+
 
 
 class IndexText(HTMLParser):
@@ -234,23 +233,9 @@ class LocalSearchProvider:
     def search(self, query, *, limit=5):
         if self.entries is None and not self._load():
             self._crawl()
-        terms = set(tokens(query)) - STOP
-        if not terms:
-            return []
-        documents = [(e, Counter(tokens(e['text'])), set(tokens(e['title']))) for e in self.entries]
-        frequency = Counter(t for _, words, title in documents for t in terms if t in words or t in title)
-        ranked = []
-        for e, words, title in documents:
-            matched = terms & (words.keys() | title)
-            # Rare terms and title matches outweigh repeated generic body terms.
-            score = sum(math.log(1 + len(documents) / (1 + frequency[t])) *
-                        (min(words[t], 3) + 4 * (t in title)) for t in matched)
-            score *= len(matched) / len(terms)
-            phrase = query.strip().casefold()
-            if len(phrase) > 3 and phrase in (e['title'] + ' ' + e['text']).casefold():
-                score *= 2
-            if score:
-                ranked.append((score, e))
+        scores = keyword_scores([e['text'] for e in self.entries], query,
+                                [e['title'] for e in self.entries])
+        ranked = [(score, e) for score, e in zip(scores, self.entries) if score > 0]
         ranked.sort(key=lambda item: (-item[0], item[1]['url']))
         return [SearchResult(e['title'], e['url'], '', self.name, i, e['retrieved_at'])
                 for i, (_, e) in enumerate(ranked[:limit], 1)]

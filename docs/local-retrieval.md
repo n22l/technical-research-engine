@@ -15,7 +15,7 @@ Demo mode reads only the bundled `data/demo/` fixtures. It does not read TECH_RE
 
 ## Implemented scope
 
-UTF-8 text files and a JSON metadata manifest are loaded locally. Blank-line-separated paragraphs become passages with stable IDs such as `document-id:p2` while the source text is unchanged. TF-IDF cosine similarity ranks passages using English alphanumeric words and Chinese single characters and adjacent character pairs. Up to five positive-score passages are returned, with original text, paragraph number, title, publisher, source URL, publication date, and language.
+Retrieval uses length-normalized BM25-style keyword scoring, query-term coverage, adjacent keyword phrase bonuses and numeric-match preference. Common English question words are ignored; Chinese multi-character runs use adjacent character pairs for ranking. Double-quoted phrases must occur in returned text. Single-word overlaps are suppressed for queries with three or more meaningful terms. Original text and citation locations are unchanged. These heuristics improve lexical specificity but do not establish answerability.
 
 Indexes exist only in memory and are rebuilt on each command. There are no persisted embeddings, caches, telemetry, network calls, generated answers, automatic translation, semantic embeddings, or evidence-status predictions. Queries generally need the source language or shared vocabulary. This is not a general cross-language semantic search system.
 

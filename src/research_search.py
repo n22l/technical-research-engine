@@ -143,24 +143,62 @@ def tokens(text):
     return Counter(output)
 
 
+SEARCH_STOP = set("a an the is are was were has have had do does did what when where which who how of to in on at for and or with by from current latest evidence official source confirm contradict verify please tell me about can could would should this that these those it its be been being".split())
+
+
+def keyword_tokens(text):
+    # Preserve token identities used by ingestion; retrieval filtering is separate.
+    result = tokens(text)
+    return Counter({t: n for t, n in result.items() if t not in SEARCH_STOP and
+                    not (len(t) == 1 and '\u3400' <= t <= '\u9fff' and
+                         any(len(x) == 2 and t in x for x in result))})
+
+
+def keyword_scores(texts, question, titles=None):
+    """Lexical relevance only: BM25, term coverage and adjacent keyword phrases."""
+    query = keyword_tokens(question)
+    if not query or not texts:
+        return [0.0] * len(texts)
+    titles = titles or [''] * len(texts)
+    vectors = [keyword_tokens(text) for text in texts]
+    title_vectors = [keyword_tokens(title) for title in titles]
+    df = Counter(term for v, title in zip(vectors, title_vectors) for term in query if term in v or term in title)
+    average = sum(sum(v.values()) for v in vectors) / len(vectors) or 1
+    ordered = list(query)
+    pairs = list(zip(ordered, ordered[1:]))
+    quoted = re.findall(r'"([^"\n]+)"', question)
+    normalize = lambda value: ' '.join(re.findall(r'[a-z0-9]+|[\u3400-\u9fff]', unicodedata.normalize('NFKC', value).lower()))
+    scores = []
+    for text, title, vector, tv in zip(texts, titles, vectors, title_vectors):
+        matched = query.keys() & (vector.keys() | tv.keys())
+        # One generic shared word is insufficient for a multi-keyword request.
+        if not matched or (len(query) >= 3 and len(matched) < 2):
+            scores.append(0.0)
+            continue
+        haystack = normalize(title + ' ' + text)
+        if quoted and not all(normalize(phrase) in haystack for phrase in quoted):
+            scores.append(0.0)
+            continue
+        length = sum(vector.values())
+        score = 0.0
+        for term in matched:
+            weight = math.log(1 + (len(vectors) - df[term] + .5) / (df[term] + .5))
+            tf = vector[term]
+            score += weight * (tf * 2.2 / (tf + 1.2 * (.25 + .75 * length / average)) + 2 * (term in tv))
+        score *= (len(matched) / len(query)) ** 2
+        score *= 1 + .25 * sum(normalize(a + ' ' + b) in haystack for a, b in pairs)
+        numbers = {term for term in query if term.isdigit()}
+        if numbers and not numbers <= matched:
+            score *= .25
+        scores.append(score)
+    return scores
+
+
 def search(passages, question, limit=5):
-    """Cosine TF-IDF over original passage text; stable ties by passage ID."""
-    vectors = [tokens(p["passage"]) for p in passages]
-    frequency = Counter(t for vector in vectors for t in vector)
-    idf = {t: math.log((1 + len(vectors)) / (1 + n)) + 1 for t, n in frequency.items()}
-
-    def weighted(vector):
-        values = {t: (1 + math.log(n)) * idf[t] for t, n in vector.items() if t in idf}
-        norm = math.sqrt(sum(v * v for v in values.values()))
-        return {t: v / norm for t, v in values.items()} if norm else {}
-
-    query = weighted(tokens(question))
-    ranked = []
-    for passage, vector in zip(passages, vectors):
-        score = sum(query.get(t, 0) * v for t, v in weighted(vector).items())
-        if score > 0:
-            ranked.append({**passage, "score": round(score, 8)})
-    return sorted(ranked, key=lambda row: (-row["score"], row["passage_id"]))[:limit]
+    """Rank original passages without changing text, IDs or citation offsets."""
+    scores = keyword_scores([p['passage'] for p in passages], question)
+    ranked = [{**p, 'score': round(score, 8)} for p, score in zip(passages, scores) if score > 0]
+    return sorted(ranked, key=lambda row: (-row['score'], row['passage_id']))[:limit]
 
 
 def evaluate(base, passages):

@@ -125,3 +125,23 @@ Use Research options → Refresh local source index to build or extend the priva
 URLs resume on the next refresh. Research summaries show indexed hosts,
 pending URLs and stale-document counts. A first refresh does not guarantee
 500 documents. See [crawler configuration](automatic-web-search.md#free-local-default).
+
+## Manual URLs and keyword search
+
+Manual URLs mode requires at least one approved HTTPS URL under Research options.
+A supplied-URL run reports MANUAL_URLS_ONLY and does not require an automatic
+search provider. Actual provider failures still appear if an automatic provider
+was selected, even when additional manual URLs are present. After updating and
+restarting the server, start a new research run; historical reports retain their
+original failure records.
+
+Page discovery and passage selection now share keyword scoring: stop-word
+filtering, length normalization, term coverage, phrase/title weighting and
+numeric-match preference. Use double quotes for an exact phrase. Broad synonyms,
+translation and semantic relevance still require human judgment. An existing
+review run whose selected candidate set changes under the new ranker must be
+researched and reviewed again; old reviews are not silently reassigned.
+
+Validation for this fix: 104 tests, 102 passed and two skipped. The bundled demo
+retains all six answerable Hit@5 cases; this tiny fixture is not real-world
+accuracy validation.

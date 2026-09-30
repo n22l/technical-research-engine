@@ -76,6 +76,50 @@ class UITests(unittest.TestCase):
         self.assertEqual(selected[0]['status'], 'Retrieval unavailable')
         self.assertFalse(state['can_verify'])
 
+    def test_manual_urls_require_input_and_never_need_search_provider(self):
+        with self.assertRaisesRegex(UIError, 'at least one source URL'):
+            self.app.start({'text': 'Test booster reflight', 'provider': 'manual', 'urls': []})
+        body = b'<title>Test booster</title><meta name="date" content="2026-01-01"><p>Test booster reflight occurred.</p>'
+        def manual_provider(name, **kwargs):
+            self.assertEqual(name, 'manual')
+            return None
+        with patch('ui_service.configured_provider', side_effect=manual_provider), \
+             patch('verify.Fetcher.fetch', return_value=(body, 'text/html')), patch('verify.time.sleep'):
+            job = self.app.start({'text': 'Test booster reflight occurred.', 'provider': 'manual',
+                                  'urls': ['https://agency.example/record']})
+            for _ in range(300):
+                status = self.app.job(job['job_id'])
+                if status['status'] != 'running':
+                    break
+                threading.Event().wait(.01)
+            self.assertEqual(status['status'], 'complete')
+            state = self.app.view(status['run_id'])
+        self.assertEqual(state['result']['search']['status'], 'MANUAL_URLS_ONLY')
+        self.assertEqual(state['result']['search']['queries'], 0)
+        self.assertNotIn('SEARCH_UNAVAILABLE', state['result']['failures'])
+        self.assertTrue(state['result']['key_evidence'])
+        reviewed = self.app.save_review(state['id'], self.review(state))
+        self.assertEqual(self.app.verify(state['id'], reviewed['revision'])['final']['verdict'], 'TRUE')
+
+    def test_failed_automatic_provider_with_urls_still_reports_failure(self):
+        with patch('ui_service.configured_provider', side_effect=SearchError('SEARCH_UNAVAILABLE')), \
+             patch('verify.Fetcher.fetch', return_value=(b'<p>Test booster reflight occurred.</p>', 'text/html')), patch('verify.time.sleep'):
+            job = self.app.start({'text': 'Test booster reflight occurred.', 'provider': 'brave',
+                                  'urls': ['https://agency.example/record']})
+            for _ in range(300):
+                status = self.app.job(job['job_id'])
+                if status['status'] != 'running':
+                    break
+                threading.Event().wait(.01)
+            state = self.app.view(status['run_id'])
+        self.assertEqual(state['result']['search']['status'], 'SEARCH_FAILED')
+        self.assertIn('SEARCH_UNAVAILABLE', state['result']['failures'])
+        self.assertIsNone(state['result']['verdict'])
+        reviewed = self.app.save_review(state['id'], self.review(state))
+        self.assertFalse(reviewed['can_verify'])
+        with self.assertRaisesRegex(UIError, 'Search failed'):
+            self.app.verify(state['id'], reviewed['revision'])
+
     def test_empty_input_rejected(self):
         with self.assertRaises(UIError):
             self.app.start({'text': ' '})

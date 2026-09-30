@@ -124,7 +124,8 @@ class Application:
                 for e in record['key_evidence']:
                     e['passage_truncated'] = len(e['exact_passage']) > 1200
                     e['exact_passage'] = e['exact_passage'][:1200]
-        state['can_verify'] = self._ready(state) and not state['integrity_error']
+        state['can_verify'] = (self._ready(state) and not state['integrity_error']
+                               and search['status'] != 'SEARCH_FAILED')
         return state
 
     def start(self, values):
@@ -148,6 +149,8 @@ class Application:
         urls = values.get('urls', [])
         if not isinstance(urls, list) or len(urls) > 20 or any(not isinstance(u, str) or len(u) > 4096 for u in urls):
             raise UIError('Provide at most 20 source URLs.')
+        if provider_name == 'manual' and not any(u.strip() for u in urls):
+            raise UIError('Manual URLs mode requires at least one source URL. Add an approved HTTPS URL under Research options.')
         with self.lock:
             if self.busy:
                 raise UIError('A research job is already running. Please wait.')
@@ -257,7 +260,8 @@ class Application:
             if revision != state['revision'] or not self._ready(state):
                 raise UIError('Review every candidate and mark at least one relevant before verification.')
             original = state['result']
-            if original['search']['provider'] != 'manual_urls' and original['search']['status'] != 'SEARCH_COMPLETE':
+            if (original['search']['status'] == 'SEARCH_FAILED' or
+                    (original['search']['provider'] != 'manual_urls' and original['search']['status'] != 'SEARCH_COMPLETE')):
                 raise UIError('Search failed. Repeat research successfully before verification.')
             docs = self._documents(state)
             request = ResearchRequest(**original['request'])
