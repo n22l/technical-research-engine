@@ -64,6 +64,138 @@
       "crawl_seeds": [
         "https://global.jaxa.jp/projects/rockets/"
       ]
+    },
+    "www.dlr.de": {
+      "tier": 1,
+      "type": "research_organization",
+      "publisher": "DLR",
+      "allowed": true,
+      "official": true,
+      "primary": true,
+      "crawl_seeds": [
+        "https://www.dlr.de/en"
+      ]
+    },
+    "cnes.fr": {
+      "tier": 1,
+      "type": "government",
+      "publisher": "CNES",
+      "allowed": true,
+      "official": true,
+      "primary": true,
+      "crawl_seeds": [
+        "https://cnes.fr/en"
+      ]
+    },
+    "www.isro.gov.in": {
+      "tier": 1,
+      "type": "government",
+      "publisher": "ISRO",
+      "allowed": true,
+      "official": true,
+      "primary": true,
+      "crawl_seeds": [
+        "https://www.isro.gov.in/"
+      ]
+    },
+    "english.cas.cn": {
+      "tier": 1,
+      "type": "research_organization",
+      "publisher": "Chinese Academy of Sciences",
+      "allowed": true,
+      "official": true,
+      "primary": true,
+      "crawl_seeds": [
+        "https://english.cas.cn/"
+      ]
+    },
+    "aerospace.org": {
+      "tier": 1,
+      "type": "research_organization",
+      "publisher": "The Aerospace Corporation",
+      "allowed": true,
+      "official": true,
+      "primary": true,
+      "crawl_seeds": [
+        "https://aerospace.org/"
+      ]
+    },
+    "www.blueorigin.com": {
+      "tier": 1,
+      "type": "company",
+      "publisher": "Blue Origin",
+      "allowed": true,
+      "official": true,
+      "primary": true,
+      "crawl_seeds": [
+        "https://www.blueorigin.com/new-glenn"
+      ]
+    },
+    "rocketlabcorp.com": {
+      "tier": 1,
+      "type": "company",
+      "publisher": "Rocket Lab",
+      "allowed": true,
+      "official": true,
+      "primary": true,
+      "crawl_seeds": [
+        "https://rocketlabcorp.com/"
+      ]
+    },
+    "www.ulalaunch.com": {
+      "tier": 1,
+      "type": "company",
+      "publisher": "United Launch Alliance",
+      "allowed": true,
+      "official": true,
+      "primary": true,
+      "crawl_seeds": [
+        "https://www.ulalaunch.com/"
+      ]
+    },
+    "www.stokespace.com": {
+      "tier": 1,
+      "type": "company",
+      "publisher": "Stoke Space",
+      "allowed": true,
+      "official": true,
+      "primary": true,
+      "crawl_seeds": [
+        "https://www.stokespace.com/"
+      ]
+    },
+    "www.landspace.com": {
+      "tier": 1,
+      "type": "company",
+      "publisher": "LandSpace",
+      "allowed": true,
+      "official": true,
+      "primary": true,
+      "crawl_seeds": [
+        "https://www.landspace.com/en/"
+      ]
+    },
+    "www.galactic-energy.cn": {
+      "tier": 1,
+      "type": "company",
+      "publisher": "Galactic Energy",
+      "allowed": true,
+      "official": true,
+      "primary": true,
+      "crawl_seeds": [
+        "https://www.galactic-energy.cn/"
+      ]
+    },
+    "www.ariane.group": {
+      "tier": 1,
+      "type": "company",
+      "publisher": "ArianeGroup",
+      "allowed": true,
+      "official": true,
+      "primary": true,
+      "crawl_seeds": [
+        "https://www.ariane.group/en/"
+      ]
     }
   }
 }
