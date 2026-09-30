@@ -16,6 +16,7 @@ from verify import research
 from search_discovery import configured_provider, SearchError
 from web_sources import SourcePolicy, parse_document
 from domains.aerospace.rules import STATUSES, MILESTONES
+import source_suggestions
 
 ROOT = Path(__file__).resolve().parent
 
@@ -29,6 +30,9 @@ class Application:
         self.base = external_directory(base) if base is not None else private_directory()
         self.policy = policy or SourcePolicy.load(ROOT.parent / 'config/source-policy.json')
         self.lock = threading.RLock()
+        for suggestion in source_suggestions.suggestions(self.base):
+            if suggestion['status'] == 'approved' and suggestion['host'] not in self.policy.rules:
+                self.policy.rules[suggestion['host']] = source_suggestions.approved_rule(suggestion)
         self.jobs = {}
         self.busy = False
 
@@ -38,6 +42,26 @@ class Application:
                 'searxng': bool(os.environ.get('TECH_RESEARCH_SEARXNG_URL'))},
                 'sources': [{'host': host, **rule} for host, rule in self.policy.rules.items()],
                 'statuses': sorted(STATUSES), 'milestones': list(MILESTONES)}
+
+    def source_suggestions(self):
+        with self.lock:
+            return source_suggestions.suggestions(self.base)
+
+    def suggest_source(self, values):
+        with self.lock:
+            try:
+                return source_suggestions.submit(self.base, self.policy, values)
+            except ValueError as exc:
+                raise UIError(str(exc)) from None
+
+    def decide_source(self, values):
+        with self.lock:
+            if self.busy:
+                raise UIError('Wait for the active research job before changing approved sources.')
+            try:
+                return source_suggestions.decide(self.base, self.policy, values)
+            except ValueError as exc:
+                raise UIError(str(exc)) from None
 
     def _history(self):
         latest = {}

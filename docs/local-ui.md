@@ -146,3 +146,28 @@ researched and reviewed again; old reviews are not silently reassigned.
 Validation for this fix: 104 tests, 102 passed and two skipped. The bundled demo
 retains all six answerable Hit@5 cases; this tiny fixture is not real-world
 accuracy validation.
+## Suggest and approve sources
+
+Open Sources and submit an HTTPS website URL, publisher, and reason. Submission
+only creates a pending suggestion; it does not fetch the website or add it to
+approved search coverage. Open the original website yourself to assess identity
+and relevance, then enter a reviewer name, classification, tier and official-site
+status. Check the explicit approval confirmation and select Approve and add.
+Reject suggestion leaves the host unapproved.
+
+Approval permits only the exact hostname. Tier 2 is the default; selecting Tier 1
+requires an explicit choice. Company classifications retain existing company
+claim safeguards. Approval is not proof that every statement is true.
+
+Suggestions and approval decisions are immutable private records under
+TECH_RESEARCH_DATA_DIR. Approved additions reload on UI restart and apply to
+future UI research; they do not modify the Git-tracked catalog or CLI policy.
+Existing configured hosts cannot be overwritten through this workflow. Approval
+is blocked while research runs to avoid changing its source policy mid-job.
+A source-policy change causes the next local search to build a matching index.
+
+This is a single-user local app: approval is an explicit human workflow, not a
+separate authenticated administrator account. Other software with access as the
+same OS user remains within the existing trust boundary. To change/remove a
+previously approved addition, use a future managed policy-editing workflow;
+this version intentionally provides no destructive cleanup button.

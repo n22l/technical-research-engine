@@ -18,6 +18,7 @@ function check(form,name,label,value) { const l=el('label',undefined,'check'), i
 async function page(name) {
   document.querySelectorAll('.page').forEach(p => p.hidden = p.id !== name);
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active',b.dataset.page===name));
+  if(name==='sources' && config.configured) await renderSourceSuggestions();
   if(name==='history' && config.configured) { const items=await api('/api/history'); $('history-list').replaceChildren(); if(!items.length)$('history-list').append(el('p','No research yet. Start with a question.')); for(const r of items){const c=el('article',undefined,'panel');add(c,el('div',`${r.date.slice(0,10)} · ${r.provider} · ${r.status}`,'muted'),el('h2',r.text),el('p',r.verdict||'Verdict withheld'),button('Open research',()=>openRun(r.id)));$('history-list').append(c);} }
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>page(b.dataset.page).catch(e=>error(e.message)));
@@ -87,3 +88,20 @@ async function init(){config=await api('/api/config');if(!config.configured){$('
   config.sources.forEach(s=>{const c=el('article',undefined,'card');add(c,el('h3',s.publisher),el('p',s.host),el('p',`Tier ${s.tier} · ${s.type} · ${s.allowed?'Allowed':'Not allowed'}`,'muted'));$('source-list').append(c);});
 }
 init().catch(e=>error(e.message));
+
+async function renderSourceSuggestions(){
+  config=await api('/api/config');$('source-list').replaceChildren();
+  config.sources.forEach(s=>{const c=el('article',undefined,'card');add(c,el('h3',s.publisher),el('p',s.host),el('p',`Tier ${s.tier} · ${s.type} · ${s.allowed?'Allowed':'Not allowed'}`,'muted'));$('source-list').append(c);});
+  const root=$('source-suggestions');root.replaceChildren();add(root,el('h2','Suggest a source'),el('p','Suggestions stay pending and are not fetched or searched until you approve them. Approval applies only to this exact host, not its subdomains.'));
+  const form=el('form');textField(form,'url','Website HTTPS URL');textField(form,'publisher','Publisher / organization');textField(form,'reason','Why this source is relevant', '',true);
+  form.onsubmit=e=>e.preventDefault();form.append(button('Submit suggestion',async()=>{await api('/api/source-suggestions',Object.fromEntries(new FormData(form)));await renderSourceSuggestions();}));root.append(form);
+  const rows=await api('/api/source-suggestions');root.append(el('h2','Source suggestions'));
+  if(!rows.length)root.append(el('p','No suggestions yet.'));
+  for(const row of rows){const card=el('article',undefined,'panel');add(card,el('h3',row.publisher),el('p',row.host+' · '+row.status),el('p',row.reason),link(row.url));
+    if(row.status==='pending'){
+      const review=el('form');review.onsubmit=e=>e.preventDefault();textField(review,'reviewer','Approving reviewer');selectField(review,'type','Source classification',['government','regulator','research_organization','company','major_news'],'company');selectField(review,'tier','Source tier',[['2','Tier 2'],['1','Tier 1 — primary institutional source']],'2');check(review,'official','This is the organization’s official website',false);check(review,'confirmed','I reviewed this website and approve adding this exact host',false);
+      review.append(el('p','Tier and official status do not establish factual truth or source independence. Company claims still require the existing evidence safeguards.','muted'));
+      review.append(button('Approve and add',async()=>{const v=Object.fromEntries(new FormData(review));await api('/api/source-decisions',{...v,id:row.id,decision:'approve',tier:Number(v.tier),official:review.elements.official.checked,confirmed:review.elements.confirmed.checked});await renderSourceSuggestions();},true));review.append(button('Reject suggestion',async()=>{await api('/api/source-decisions',{id:row.id,decision:'reject'});await renderSourceSuggestions();}));card.append(review);
+    }root.append(card);
+  }
+}
