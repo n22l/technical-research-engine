@@ -81,9 +81,17 @@ class Application:
                 continue
         return latest
 
+    def set_history_deleted(self, run_id, deleted):
+        with self.lock:
+            state = self.load(run_id)
+            state["deleted"] = deleted
+            self._save(state)
+        return {"ok": True}
+
     def history(self):
         with self.lock:
             return [{'id': r['id'], 'date': r['updated'], 'text': r['result']['request']['text'],
+                     'deleted': r.get('deleted', False),
                      'status': 'Verified' if r.get('final') else 'Awaiting review',
                      'verdict': (r.get('final') or {}).get('verdict'),
                      'provider': r['result']['search']['provider']}
