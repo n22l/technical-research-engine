@@ -54,6 +54,7 @@ def research(request, policy, urls, base, offline=False, captures=None, reviews=
                          results_per_query=results_per_query, max_candidates=max_candidate_urls)
     if configuration_error and not offline:
         discovery['failures'] = [configuration_error]
+        discovery['status'] = 'SEARCH_FAILED'
     failures.extend(discovery['failures'])
     if any(c['source_policy_status'] != 'APPROVED_EVIDENCE_SOURCE'
            and any(d['provider'] == 'manual_urls' for d in c['discoveries'])
@@ -115,7 +116,7 @@ def research(request, policy, urls, base, offline=False, captures=None, reviews=
              'bounded approved-site local index; may be cached up to 24 hours; human review required'
              if search_provider is not None and search_provider.name == 'local' else
              'automatic web discovery plus supplied URLs; human review required' if automatic else
-             'manual public URLs only; current web search unavailable')
+             'supplied manual public URLs only; automatic discovery was not requested')
     result.update(research_scope=scope, search=discovery,
                   run_manifest={'engine_version': '0.3', 'request': asdict(request), 'documents': [asdict(d.source) for d in documents],
                                 'search': discovery, 'source_dependencies': result['source_differences']['likely_dependencies'],
