@@ -33,7 +33,7 @@ class Application:
         self.busy = False
 
     def configuration(self):
-        return {'configured': True, 'providers': {'local': True, 'manual': True,
+        return {'configured': True, 'providers': {'local': True,
                 'brave': bool(os.environ.get('BRAVE_SEARCH_API_KEY')),
                 'searxng': bool(os.environ.get('TECH_RESEARCH_SEARXNG_URL'))},
                 'sources': [{'host': host, **rule} for host, rule in self.policy.rules.items()],
@@ -146,11 +146,13 @@ class Application:
         provider_name = values.get('provider', 'local')
         if provider_name not in ('local', 'manual', 'brave', 'searxng'):
             raise UIError('Unknown search provider.')
+        # Old browser tabs may still submit the former manual option.
+        # UI research always discovers approved sources unless another provider is explicit.
+        if provider_name == 'manual':
+            provider_name = 'local'
         urls = values.get('urls', [])
         if not isinstance(urls, list) or len(urls) > 20 or any(not isinstance(u, str) or len(u) > 4096 for u in urls):
             raise UIError('Provide at most 20 source URLs.')
-        if provider_name == 'manual' and not any(u.strip() for u in urls):
-            raise UIError('Manual URLs mode requires at least one source URL. Add an approved HTTPS URL under Research options.')
         with self.lock:
             if self.busy:
                 raise UIError('A research job is already running. Please wait.')

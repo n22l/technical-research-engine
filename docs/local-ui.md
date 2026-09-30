@@ -128,12 +128,13 @@ pending URLs and stale-document counts. A first refresh does not guarantee
 
 ## Manual URLs and keyword search
 
-Manual URLs mode requires at least one approved HTTPS URL under Research options.
-A supplied-URL run reports MANUAL_URLS_ONLY and does not require an automatic
-search provider. Actual provider failures still appear if an automatic provider
-was selected, even when additional manual URLs are present. After updating and
-restarting the server, start a new research run; historical reports retain their
-original failure records.
+The browser defaults to Approved sources · automatic (free). Additional source
+URLs are optional and supplement discovery; leaving the field empty still
+searches the approved-site index. The former UI Manual URLs option has been
+removed, and submissions from older tabs using that option are mapped to local
+automatic discovery. The CLI --search-provider manual remains manual-only.
+Restart the server and reload the browser after updating. Start a new run;
+historical reports keep their original scope and failure records.
 
 Page discovery and passage selection now share keyword scoring: stop-word
 filtering, length normalization, term coverage, phrase/title weighting and
