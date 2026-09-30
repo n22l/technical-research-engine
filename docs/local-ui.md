@@ -67,7 +67,7 @@ JavaScript syntax is checked separately with Node.
 
 Semantic assessment still depends on the human reviewer. The engine does not
 provide autonomous entailment or broad answer synthesis. History scans immutable
-snapshots and has no retention/cleanup UI. Selected sources that could not be parsed remain visible with unavailable metadata. No cloud, accounts or
+snapshots. History deletion hides an entry and permits restoration; it does not erase private files. Selected sources that could not be parsed remain visible with unavailable metadata. No cloud, accounts or
 telemetry are introduced.
 
 ## Troubleshooting
@@ -171,3 +171,12 @@ separate authenticated administrator account. Other software with access as the
 same OS user remains within the existing trust boundary. To change/remove a
 previously approved addition, use a future managed policy-editing workflow;
 this version intentionally provides no destructive cleanup button.
+
+## Delete and restore history
+
+Each History entry has a Delete button. Confirm the selected question to remove
+it from active history. Select Show deleted history to find removed entries and
+use Restore to return an entry to active history. Deletion persists across server
+restarts. Research results, reviews, captures and exports are preserved in the
+private directory; this is recoverable removal from the list, not disk cleanup.
+Restart the server and reload the browser after updating to see these controls.

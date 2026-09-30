@@ -118,6 +118,16 @@ class UITests(unittest.TestCase):
         with self.assertRaisesRegex(UIError, 'Search failed'):
             self.app.verify(state['id'], reviewed['revision'])
 
+    def test_history_delete_and_restore_preserve_research(self):
+        state = self.run_research()
+        self.app.set_history_deleted(state['id'], True)
+        self.assertTrue(self.app.history()[0]['deleted'])
+        reopened = Application(self.base, self.policy)
+        self.assertTrue(reopened.history()[0]['deleted'])
+        reopened.set_history_deleted(state['id'], False)
+        self.assertFalse(reopened.history()[0]['deleted'])
+        self.assertEqual(reopened.view(state['id'])['result'], state['result'])
+
     def test_empty_input_rejected(self):
         with self.assertRaises(UIError):
             self.app.start({'text': ' '})

@@ -1,7 +1,7 @@
 'use strict';
 const token = document.querySelector('meta[name="ui-token"]').content;
 const $ = id => document.getElementById(id);
-let config, state, selected = 0, filter = 'All';
+let config, state, selected = 0, filter = 'All', showDeleted = false;
 function el(tag, text, cls) { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; }
 function add(parent, ...children) { children.forEach(c => parent.append(c)); return parent; }
 function error(message) { $('notice').textContent = message; $('notice').hidden = !message; }
@@ -19,7 +19,30 @@ async function page(name) {
   document.querySelectorAll('.page').forEach(p => p.hidden = p.id !== name);
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active',b.dataset.page===name));
   if(name==='sources' && config.configured) await renderSourceSuggestions();
-  if(name==='history' && config.configured) { const items=await api('/api/history'); $('history-list').replaceChildren(); if(!items.length)$('history-list').append(el('p','No research yet. Start with a question.')); for(const r of items){const c=el('article',undefined,'panel');add(c,el('div',`${r.date.slice(0,10)} Â· ${r.provider} Â· ${r.status}`,'muted'),el('h2',r.text),el('p',r.verdict||'Verdict withheld'),button('Open research',()=>openRun(r.id)));$('history-list').append(c);} }
+  if(name==='history' && config.configured) {
+    const items = await api('/api/history');
+    const list = $('history-list');
+    list.replaceChildren();
+    list.append(button(showDeleted ? 'Show active history' : 'Show deleted history', () => {
+      showDeleted = !showDeleted;
+      return page('history');
+    }));
+    const visible = items.filter(r => !!r.deleted === showDeleted);
+    if(!visible.length) list.append(el('p', showDeleted ? 'No deleted history.' : 'No active history. Start with a question.'));
+    for(const r of visible) {
+      const card = el('article', undefined, 'panel');
+      const remove = button(r.deleted ? 'Restore' : 'Delete', async () => {
+        if(!r.deleted && !confirm(`Delete “${r.text}” from active history? You can restore it from deleted history.`)) return;
+        await api('/api/history-delete', {run_id: r.id, deleted: !r.deleted});
+        await page('history');
+      });
+      remove.setAttribute('aria-label', `${r.deleted ? 'Restore' : 'Delete'} history: ${r.text}`);
+      add(card, el('div', `${r.date.slice(0,10)} · ${r.provider} · ${r.status}`, 'muted'),
+          el('h2', r.text), el('p', r.verdict || 'Verdict withheld'),
+          button('Open research', () => openRun(r.id)), remove);
+      list.append(card);
+    }
+  }
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>page(b.dataset.page).catch(e=>error(e.message)));
 async function openRun(id) { state=await api('/api/run/'+id); selected=0; filter='All'; await page('research'); render(); $('run').scrollIntoView({behavior:'smooth',block:'start'}); }
