@@ -149,6 +149,17 @@ SEARCH_STOP = set("a an the is are was were has have had do does did what when w
 def keyword_tokens(text):
     # Preserve token identities used by ingestion; retrieval filtering is separate.
     result = tokens(text)
+    # Small retrieval-only vocabulary, not translation or a capability judgment.
+    aliases = {'chinese': 'china', 'rockets': 'rocket', 'reusable': 'reuse',
+               'flown': 'flight', 'flights': 'flight'}
+    for alias, canonical in aliases.items():
+        if alias in result:
+            result[canonical] += result.pop(alias)
+    for canonical, terms in {'china': ('中国',), 'rocket': ('火箭',),
+                             'reuse': ('重复使用', '复用'),
+                             'flight': ('飞行',)}.items():
+        if any(term in text for term in terms):
+            result[canonical] += 1
     return Counter({t: n for t, n in result.items() if t not in SEARCH_STOP and
                     not (len(t) == 1 and '\u3400' <= t <= '\u9fff' and
                          any(len(x) == 2 and t in x for x in result))})

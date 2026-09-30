@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 from local_search import LocalSearchProvider, discovery_links, IndexText
-from web_sources import SourcePolicy
+from web_sources import SourcePolicy, FetchError
 
 
 class ExpandedIndexTests(unittest.TestCase):
@@ -77,6 +77,47 @@ class ExpandedIndexTests(unittest.TestCase):
         cleaner = IndexText()
         cleaner.feed('<nav>menu<script>bad()</script></nav><article>useful</article><footer>links</footer>')
         self.assertEqual(''.join(cleaner.parts), 'useful')
+
+    def test_large_frontier_does_not_starve_other_host_seeds(self):
+        self.policy.rules['second.example'] = dict(self.policy.rules['agency.example'])
+        provider = LocalSearchProvider(self.base, self.policy, max_pages=2)
+        provider.frontier = [('https://agency.example/page' + str(i), 1, 'page') for i in range(3000)]
+        def fetch(url):
+            if url.endswith('robots.txt'):
+                return b'User-agent: *\nDisallow:', 'text/plain'
+            return b'<p>Reusable rocket flight record.</p>', 'text/html'
+        with patch('local_search.time.sleep'), patch('local_search.Fetcher.fetch', side_effect=fetch):
+            provider._crawl()
+        self.assertEqual(provider.audit['hosts'], ['agency.example', 'second.example'])
+
+    def test_missing_robots_allows_but_denial_and_server_failure_block(self):
+        for status, allowed in [(404, True), (410, True), (403, False), (429, False), (503, False)]:
+            provider = LocalSearchProvider(self.base, self.policy, max_pages=1)
+            def fetch(url):
+                if url.endswith('robots.txt'):
+                    raise FetchError(status)
+                return b'<p>Reusable rocket flight record.</p>', 'text/html'
+            with patch('local_search.time.sleep'), patch('local_search.Fetcher.fetch', side_effect=fetch):
+                if allowed:
+                    provider._crawl()
+                    self.assertEqual(len(provider.entries), 1)
+                else:
+                    from search_discovery import SearchError
+                    with self.assertRaises(SearchError):
+                        provider._crawl()
+
+    def test_local_discovery_does_not_match_only_query_modifiers(self):
+        from search_discovery import discover
+        from verification import decompose
+        from verification_models import ResearchRequest
+        provider = LocalSearchProvider(self.base, self.policy)
+        provider.entries = [{'url': 'https://agency.example/admin', 'title': 'Government technical report',
+                             'text': 'Independent reporting confirmation. Latest update revised.',
+                             'retrieved_at': '2026-01-01'}]
+        report = discover(decompose(ResearchRequest('Has China flown a reusable rocket?')),
+                          self.policy, [], provider)
+        self.assertEqual(report['selected_urls'], [])
+        self.assertEqual(len(report['queries_issued']), 1)
 
 
 if __name__ == '__main__':

@@ -172,6 +172,27 @@ same OS user remains within the existing trust boundary. To change/remove a
 previously approved addition, use a future managed policy-editing workflow;
 this version intentionally provides no destructive cleanup button.
 
+## Local search coverage diagnostics
+
+Approved hosts are permissions, not proof that their pages have been indexed.
+Check the indexed-host list and pending URL count before interpreting an empty
+result. Local discovery now searches the claim itself, without web-engine
+modifiers such as technical report or government record. Crawl attempts are
+shared across hosts, prioritizing underrepresented hosts when counts tie.
+Version 2 caches are retained and extended once using the new scheduler.
+Further bounded refreshes remain explicit in Research options.
+
+A robots.txt 404 or 410 means no robots file is present; it no longer blocks
+the whole host. Denials, rate limits, server errors, redirects and invalid
+robots responses still fail closed. This is deliberately more conservative
+than the full RFC 9309 behavior.
+
+A small retrieval vocabulary matches China/Chinese, rocket/rockets,
+reuse/reusable and flight/flown, with Chinese subject terms. It is not general
+translation, and landing, reflight and operational reuse remain distinct
+human judgments. Exact quoted phrases still require their original wording.
+A relevant page can still be absent, blocked, outside the crawl budget or
+missed by lexical ranking. Empty retrieval is never evidence of absence.
 ## Delete and restore history
 
 Each History entry has a Delete button. Confirm the selected question to remove

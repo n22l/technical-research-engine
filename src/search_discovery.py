@@ -182,8 +182,12 @@ def discover(claims, policy, manual_urls, provider=None, *, domain=None, offline
     if not isinstance(manual_urls, list) or len(manual_urls) > 100:
         raise ValueError('Invalid manual URL list')
     per_claim = [query_intents(c, domain, policy) for c in claims]
+    if provider and provider.name == 'local':
+        # Web-engine modifiers are not subject terms in a lexical local index.
+        per_claim = [[{'claim_id': c.claim_id, 'intent': 'LOCAL_SUBJECT',
+                       'query': c.text}] for c in claims]
     # Round-robin avoids spending the full query budget on the first subclaim.
-    intents = [items[i] for i in range(5) for items in per_claim][:max_queries]
+    intents = [items[i] for i in range(5) for items in per_claim if i < len(items)][:max_queries]
     report = {'provider': provider.name if provider and not offline else 'manual_urls',
               'search_time': now(), 'planned_queries': intents, 'queries_issued': [],
               'results_returned': 0, 'candidates': [], 'selected_urls': [], 'rejected_urls': [],
