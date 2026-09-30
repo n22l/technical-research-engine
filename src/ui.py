@@ -60,6 +60,8 @@ def create_server(port=8000, application=None):
                 if app is None:
                     raise UIError('The engine needs an external private research directory. Set TECH_RESEARCH_DATA_DIR and restart.')
                 parts = path.strip('/').split('/')
+                if path == '/api/source-suggestions':
+                    return self.send(app.source_suggestions())
                 if path == '/api/history':
                     return self.send(app.history())
                 if len(parts) == 3 and parts[:2] == ['api', 'run']:
@@ -88,6 +90,10 @@ def create_server(port=8000, application=None):
                     raise UIError('Invalid request.')
                 if app is None:
                     raise UIError('Configure TECH_RESEARCH_DATA_DIR and restart.')
+                if self.path == '/api/source-suggestions':
+                    return self.send(app.suggest_source(values), 201)
+                if self.path == '/api/source-decisions':
+                    return self.send(app.decide_source(values))
                 if self.path == '/api/research':
                     return self.send(app.start(values), 202)
                 if self.path == '/api/review':
