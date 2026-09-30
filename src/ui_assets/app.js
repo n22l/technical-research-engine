@@ -32,12 +32,12 @@ async function page(name) {
     for(const r of visible) {
       const card = el('article', undefined, 'panel');
       const remove = button(r.deleted ? 'Restore' : 'Delete', async () => {
-        if(!r.deleted && !confirm(`Delete “${r.text}” from active history? You can restore it from deleted history.`)) return;
+        if(!r.deleted && !confirm(`Delete â€œ${r.text}â€ from active history? You can restore it from deleted history.`)) return;
         await api('/api/history-delete', {run_id: r.id, deleted: !r.deleted});
         await page('history');
       });
       remove.setAttribute('aria-label', `${r.deleted ? 'Restore' : 'Delete'} history: ${r.text}`);
-      add(card, el('div', `${r.date.slice(0,10)} · ${r.provider} · ${r.status}`, 'muted'),
+      add(card, el('div', `${r.date.slice(0,10)} Â· ${r.provider} Â· ${r.status}`, 'muted'),
           el('h2', r.text), el('p', r.verdict || 'Verdict withheld'),
           button('Open research', () => openRun(r.id)), remove);
       list.append(card);
