@@ -34,5 +34,13 @@ class KeywordTests(unittest.TestCase):
         text='Falcon-9 reflight: original punctuation.'
         self.assertEqual(self.rank([text], 'Falcon 9 reflight')[0]['passage'], text)
 
+    def test_bilingual_subject_terms_preserve_original_evidence(self):
+        text = '中国重复使用火箭飞行试验。'
+        rows = self.rank([text, 'An unrelated government technical report.'],
+                         'Has China flown a reusable rocket?')
+        self.assertEqual([r['passage_id'] for r in rows], ['0'])
+        self.assertEqual(rows[0]['passage'], text)
+        self.assertEqual(self.rank([text], '"reusable rocket"'), [])
+
 
 if __name__=='__main__': unittest.main()

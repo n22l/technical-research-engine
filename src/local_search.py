@@ -14,7 +14,7 @@ from urllib.robotparser import RobotFileParser
 from research_search import external_directory, safe_file, keyword_scores
 from search_discovery import SearchResult, SearchError, normalize_url
 from verification_models import digest, now
-from web_sources import Fetcher, parse_document
+from web_sources import Fetcher, FetchError, parse_document
 
 
 
@@ -89,7 +89,7 @@ class LocalSearchProvider:
                 if path.stat().st_size > 40_000_000:
                     continue
                 saved = json.loads(path.read_text(encoding='utf-8'))
-                if saved.get('schema') != 2 or saved['policy_hash'] != self.policy_hash or saved['max_pages'] != self.max_pages:
+                if saved.get('schema') not in (2, 3) or saved['policy_hash'] != self.policy_hash or saved['max_pages'] != self.max_pages:
                     continue
                 entries = saved['entries']
                 if not isinstance(entries, list) or not 0 < len(entries) <= self.max_pages:
@@ -112,7 +112,7 @@ class LocalSearchProvider:
                 self.audit.update(cache_used=True, indexed_at=saved['indexed_at'], indexed_pages=len(entries),
                                   pending_urls=len(frontier), stale_pages=sum(time.time() - e['epoch'] >= 86400 for e in entries),
                                   hosts=sorted({urlsplit(e['url']).hostname for e in entries}))
-                return fresh and not self.refresh
+                return fresh and not self.refresh and saved.get('schema') == 3
             except (OSError, ValueError, KeyError, TypeError):
                 continue
         return False
@@ -129,9 +129,7 @@ class LocalSearchProvider:
                     queue.appendleft(item) if front else queue.append(item)
             except (ValueError, TypeError):
                 pass
-        # Pending work takes priority over recrawling unchanged start pages.
-        for item in self.frontier:
-            enqueue(*item)
+        # Reserve seed slots before a large saved frontier fills the queue.
         for host, rule in self.policy.rules.items():
             if not rule.get('allowed'):
                 continue
@@ -141,16 +139,28 @@ class LocalSearchProvider:
                 enqueue(url, kind='map')
             for url in rule.get('feeds', []):
                 enqueue(url, kind='map')
+        for item in self.frontier:
+            enqueue(*item)
+        pending = {item[0] for item in self.frontier}
+        queue = deque(sorted(queue, key=lambda item: item[0] not in pending))
         for e in retained.values():
             if time.time() - e['epoch'] >= 86400:
                 enqueue(e['url'])
         robots, hosts, maps = {}, Counter(), Counter()
+        indexed_hosts = Counter(urlsplit(url).hostname for url in retained)
         deferred, attempts = [], 0
         started = time.monotonic()
         fetcher = Fetcher(self.policy, max_bytes=2_000_000, timeout=10,
                           accept='text/html, application/pdf, application/xml, text/xml, application/rss+xml, application/atom+xml')
         while queue and attempts < self.max_pages and time.monotonic() - started < self.max_seconds:
+            # Share the attempt budget across hosts; underrepresented hosts win ties.
+            # A sitemap may add thousands of links without monopolizing the crawl.
+            index = min(range(len(queue)), key=lambda i: (
+                hosts[urlsplit(queue[i][0]).hostname],
+                indexed_hosts[urlsplit(queue[i][0]).hostname]))
+            queue.rotate(-index)
             url, depth, kind = queue.popleft()
+            queue.rotate(index)
             host = urlsplit(url).hostname
             if hosts[host] >= self.per_host:
                 deferred.append((url, depth, kind))
@@ -172,6 +182,15 @@ class LocalSearchProvider:
                     for sitemap in (parser.site_maps() or [])[:5]:
                         if urlsplit(sitemap).hostname == host:
                             enqueue(sitemap, kind='map', front=True)
+                except FetchError as exc:
+                    if exc.status in (404, 410):
+                        parser = RobotFileParser()
+                        parser.parse([])
+                        robots[host] = parser
+                        self.audit['events'].append({'url': 'https://' + host + '/robots.txt',
+                                                     'status': 'ROBOTS_NOT_PRESENT'})
+                    else:
+                        robots[host] = None
                 except Exception:
                     robots[host] = None
                 time.sleep(1)
@@ -223,7 +242,7 @@ class LocalSearchProvider:
                           budget_exhausted=bool(queue), hosts=sorted({urlsplit(e['url']).hostname for e in self.entries}))
         if not self.entries:
             raise SearchError('SEARCH_PROVIDER_ERROR')
-        saved = dict(schema=2, entries=self.entries, frontier=self.frontier, created_epoch=time.time(),
+        saved = dict(schema=3, entries=self.entries, frontier=self.frontier, created_epoch=time.time(),
                      indexed_at=self.audit['indexed_at'], policy_hash=self.policy_hash, max_pages=self.max_pages)
         name = 'local-index-' + str(time.time_ns()) + '-' + uuid.uuid4().hex + '.json'
         fd = os.open(self.base / name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
