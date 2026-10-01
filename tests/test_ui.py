@@ -132,6 +132,63 @@ class UITests(unittest.TestCase):
         with self.assertRaises(UIError):
             self.app.start({'text': ' '})
 
+    def test_reviewed_correction_and_answer_keep_evidence_binding(self):
+        import uuid
+        from verify import research
+        from verification_models import ResearchRequest, now
+        urls = ['https://agency.example/old', 'https://agency.example/new']
+        def fetch(url):
+            newer = url.endswith('/new')
+            body = '<meta name="date" content="2026-0{}-01"><p>Test booster reflight {}.</p>'.format(
+                2 if newer else 1, 'did not occur' if newer else 'occurred')
+            return body.encode(), 'text/html'
+        with patch('verify.Fetcher.fetch', side_effect=fetch), patch('verify.time.sleep'):
+            result = research(ResearchRequest('Test booster reflight occurred.', domain='aerospace'),
+                              self.policy, urls, self.base, review_only=True)
+        state = {'ui_schema': 1, 'id': uuid.uuid4().hex, 'revision': 0, 'updated': now(),
+                 'result': result, 'reviews': {}, 'final': None}
+        self.app._save(state)
+        view = self.app.view(state['id'])
+        old = next(e for e in result['key_evidence'] if 'occurred' in e['exact_passage'])
+        new = next(e for e in result['key_evidence'] if 'did not occur' in e['exact_passage'])
+        values = self.review(view)
+        values.update(evidence_id=old['evidence_id'], normalized_fact='Old report claimed a reflight.')
+        view = self.app.save_review(state['id'], values)
+        values = self.review(view)
+        values.update(evidence_id=new['evidence_id'], stance='CONTRADICTS',
+                      normalized_fact='The newer reviewed record says no reflight occurred.',
+                      supersedes=old['evidence_id'], supersession_reason='Explicit dated correction of the earlier record.')
+        view = self.app.save_review(state['id'], values)
+        final = self.app.verify(state['id'], view['revision'])['final']
+        self.assertEqual(final['verdict'], 'OUTDATED')
+        self.assertEqual(final['source_differences']['superseded_evidence_ids'], [old['evidence_id']])
+        self.assertIn('no reflight occurred', final['short_answer'])
+        self.assertEqual([p['evidence_id'] for p in final['answer_points']], [new['evidence_id']])
+        self.assertEqual(final['source_differences']['reviewed_comparisons'][0]['contradicting'], [new['evidence_id']])
+        # A forged correction target must not enter saved review records.
+        values.update(revision=self.app.load(state['id'])['revision'], supersedes='not-an-evidence-id')
+        with self.assertRaisesRegex(UIError, 'earlier passage'):
+            self.app.save_review(state['id'], values)
+
+    def test_storage_error_is_actionable_over_http(self):
+        server = create_server(0, self.app)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        conn = http.client.HTTPConnection('127.0.0.1', server.server_port)
+        self.addCleanup(conn.close)
+        conn.request('GET', '/')
+        token = re.search(r'name="ui-token" content="([^"]+)"', conn.getresponse().read().decode()).group(1)
+        with patch.object(self.app, 'set_history_deleted', side_effect=PermissionError('SECRET_PATH')):
+            conn.request('POST', '/api/history-delete', json.dumps({'run_id': 'ignored', 'deleted': True}),
+                         headers={'X-UI-Token': token, 'Content-Type': 'application/json',
+                                  'Origin': 'http://127.0.0.1:' + str(server.server_port)})
+            response = conn.getresponse()
+            message = response.read().decode()
+        self.assertEqual(response.status, 400)
+        self.assertIn('write permissions', message)
+        self.assertNotIn('SECRET_PATH', message)
+
     def test_hash_bound_review_and_verify_reopen_export(self):
         state = self.run_research()
         with self.assertRaises(UIError):

@@ -78,6 +78,25 @@ class VerificationTests(unittest.TestCase):
         docs=[self.doc(date='2027-01-01')];e=candidates(self.claims,docs)
         self.assertEqual(assess(self.request,self.claims,docs,e,self.reviews(e,docs))['verdict'],'INSUFFICIENT_PUBLIC_EVIDENCE')
 
+    def test_flown_reusable_vehicle_requires_demonstrated_flight(self):
+        # Flying a reusable design is not the same claim as reflying hardware.
+        for text in ['China has flown a reusable rocket.', '中国可重复使用火箭已经飞行。']:
+            request = ResearchRequest(text, domain='aerospace', requested_as_of_date='2026-06-01')
+            claims = decompose(request)
+            docs = [self.doc(text=text)]
+            evidence = candidates(claims, docs)
+            self.assertTrue(evidence)
+            for status in ['PLANNED', 'TARGETED', 'PROPOSED', 'DELAYED', 'CANCELLED', 'UNKNOWN', 'TESTING']:
+                reviews = self.reviews(evidence, docs)
+                for review in reviews.values():
+                    review.update(status=status, milestone='launch')
+                result = assess(request, claims, docs, evidence, reviews)
+                self.assertEqual(result['verdict'], 'INSUFFICIENT_PUBLIC_EVIDENCE', (text, status))
+            reviews = self.reviews(evidence, docs)
+            for review in reviews.values():
+                review.update(status='DEMONSTRATED', milestone='launch')
+            self.assertEqual(assess(request, claims, docs, evidence, reviews)['verdict'], 'TRUE')
+
     def test_reviewed_correction_supersedes(self):
         docs=[self.doc(date='2024-01-01'),self.doc('b.example','Test booster routine reuse was incorrectly reported.',date='2026-01-01')]
         e=candidates(self.claims,docs);r=self.reviews(e,docs)

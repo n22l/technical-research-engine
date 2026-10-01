@@ -15,6 +15,7 @@ from research_search import external_directory, safe_file, keyword_scores
 from search_discovery import SearchResult, SearchError, normalize_url
 from verification_models import digest, now
 from web_sources import Fetcher, FetchError, parse_document
+from retrieval_constraints import coverage, page_weight
 
 
 
@@ -254,7 +255,12 @@ class LocalSearchProvider:
             self._crawl()
         scores = keyword_scores([e['text'] for e in self.entries], query,
                                 [e['title'] for e in self.entries])
-        ranked = [(score, e) for score, e in zip(scores, self.entries) if score > 0]
+        ranked = [(score * page_weight(e['url']), e) for score, e in zip(scores, self.entries) if score > 0]
+        diagnostic = coverage(query, [e['title'] + ' ' + e['text'] for e in self.entries])
+        if ranked:
+            diagnostic['status'] = 'MATCHES_FOUND'
+        diagnostic['matching_pages'] = len(ranked)
+        self.audit.setdefault('query_diagnostics', []).append(diagnostic)
         ranked.sort(key=lambda item: (-item[0], item[1]['url']))
         return [SearchResult(e['title'], e['url'], '', self.name, i, e['retrieved_at'])
                 for i, (_, e) in enumerate(ranked[:limit], 1)]

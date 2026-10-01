@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "frozen_date": "2026-10-01",
+  "review_method": "Codex inspected original source pages and matched these short excerpts and expected passage IDs. No independent human validation or real-world verdict accuracy is claimed.",
+  "passages": [
+    {"passage_id": "nasa-webb-l2", "passage": "The James Webb Space Telescope orbits the Sun near Sun-Earth Lagrange point 2 (L2)", "url": "https://science.nasa.gov/asset/webb/webbs-orbit-at-sun-earth-lagrange-point-2-l2/", "locator": "First caption paragraph, opening clause", "source_checked": "2026-10-01", "kind": "source_excerpt"},
+    {"passage_id": "cnsa-recovery", "passage": "我国首次成功实施重复使用运载火箭陆地回收", "url": "https://www.cnsa.gov.cn/n6758823/n6758838/c10768762/content.html", "locator": "Article headline", "source_checked": "2026-10-01", "kind": "source_excerpt"},
+    {"passage_id": "india-distractor", "passage": "India's reusable rocket completed a recovery flight. National space day celebrates rocket technology.", "url": "https://fixture.example/space-day", "kind": "synthetic_distractor"},
+    {"passage_id": "generic-space", "passage": "The space telescope program welcomes educators. Earth and Sun activities include classroom engineering projects.", "url": "https://fixture.example/", "kind": "synthetic_distractor"}
+  ],
+  "questions": [
+    {"id": "webb-en", "question": "Is the James Webb Space Telescope near Sun-Earth L2?", "expected": ["nasa-webb-l2"], "reason": "Caption explicitly identifies Webb and L2."},
+    {"id": "webb-zh", "question": "韦布望远镜在L2附近吗？", "expected": ["nasa-webb-l2"], "reason": "Same subject and location in a Chinese query; original English remains the evidence."},
+    {"id": "webb-alias", "question": "JWST L2 orbit", "expected": ["nasa-webb-l2"], "reason": "NASA page lists James Webb Space Telescope (JWST) under Related Terms."},
+    {"id": "webb-zh-long", "question": "韦布望远镜与第二拉格朗日点", "expected": ["nasa-webb-l2"], "reason": "Terminology translation for the same source location, not a generated passage."},
+    {"id": "recovery-zh", "question": "重复使用火箭陆地回收", "expected": ["cnsa-recovery"], "reason": "Headline reports recovery; does not establish reflight."},
+    {"id": "recovery-en", "question": "reusable rocket land recovery", "expected": ["cnsa-recovery", "india-distractor"], "reason": "Both passages mention rocket recovery; synthetic result is labeled and not factual evidence."},
+    {"id": "china-reflight-en", "question": "Has China reflown a reusable rocket?", "expected": [], "reason": "Frozen corpus has no passage explicitly establishing China reflight; India is not a substitute."},
+    {"id": "china-reflight-zh", "question": "中国重复使用火箭复飞了吗？", "expected": [], "reason": "Recovery is not reflight; the corpus does not supply the requested milestone."},
+    {"id": "china-subject", "question": "China reusable rocket recovery flight", "expected": [], "reason": "India passage must be rejected. The short CNSA excerpt says our country, not China; no implicit country inference is permitted."},
+    {"id": "webb-missing", "question": "Webb rocket reflight", "expected": [], "reason": "All required subject concepts are not present in one passage."}
+  ]
+}

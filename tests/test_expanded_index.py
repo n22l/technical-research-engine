@@ -62,6 +62,23 @@ class ExpandedIndexTests(unittest.TestCase):
             self.assertTrue(provider.audit['cache_used'])
             self.assertTrue(provider.audit['events'])
 
+    def test_old_cache_is_extended_once_then_new_cache_is_reused(self):
+        import json
+        with patch('local_search.time.sleep'), patch('local_search.Fetcher.fetch', side_effect=self.fetch):
+            LocalSearchProvider(self.base, self.policy, max_pages=10, per_host=2).search('booster')
+        path = next(self.base.glob('local-index-*.json'))
+        saved = json.loads(path.read_text(encoding='utf-8'))
+        saved['schema'] = 2
+        path.write_text(json.dumps(saved), encoding='utf-8')
+        with patch('local_search.time.sleep'), patch('local_search.Fetcher.fetch', side_effect=self.fetch) as fetch:
+            upgraded = LocalSearchProvider(self.base, self.policy, max_pages=10)
+            upgraded.search('booster')
+            self.assertTrue(fetch.called)
+            self.assertGreaterEqual(len(upgraded.entries), len(saved['entries']))
+            fetch.reset_mock()
+            LocalSearchProvider(self.base, self.policy, max_pages=10).search('booster')
+            fetch.assert_not_called()
+
     def test_rare_title_terms_and_phrases_beat_generic_repetition(self):
         provider = LocalSearchProvider(self.base, self.policy)
         provider.entries = [

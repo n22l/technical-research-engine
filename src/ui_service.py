@@ -129,6 +129,8 @@ class Application:
                    'provider': search['provider'], 'status': search['status'],
                    'indexed_at': local.get('indexed_at'), 'indexed_pages': local.get('indexed_pages'),
                    'cache_used': local.get('cache_used'), 'pending_urls': local.get('pending_urls', 0),
+                   'query_diagnostics': local.get('query_diagnostics', []),
+                   'passage_diagnostics': search.get('passage_diagnostics', []),
                    'stale_pages': local.get('stale_pages', 0), 'index_hosts': local.get('hosts', []),
                    'missing_index_hosts': sorted(h for h, rule in self.policy.rules.items()
                                                  if rule.get('allowed') and h not in local.get('hosts', [])),
@@ -185,6 +187,12 @@ class Application:
         if provider_name == 'manual':
             provider_name = 'local'
         urls = values.get('urls', [])
+        explicit_claims = values.get('atomic_claims')
+        if isinstance(explicit_claims, str):
+            explicit_claims = [line.strip() for line in explicit_claims.splitlines() if line.strip()] or None
+        if explicit_claims is not None and (not isinstance(explicit_claims, list) or not 1 <= len(explicit_claims) <= 20
+                or any(not isinstance(t, str) or not t.strip() or len(t) > 10000 for t in explicit_claims)):
+            raise UIError('Use up to 20 nonempty atomic claims, one per line.')
         if not isinstance(urls, list) or len(urls) > 20 or any(not isinstance(u, str) or len(u) > 4096 for u in urls):
             raise UIError('Provide at most 20 source URLs.')
         with self.lock:
@@ -195,10 +203,10 @@ class Application:
             job_id = uuid.uuid4().hex
             self.jobs[job_id] = {'status': 'running', 'stage': 'Preparing research…'}
             self.busy = True
-        threading.Thread(target=self._research, args=(job_id, request, provider_name, urls, values.get('refresh') is True), daemon=True).start()
+        threading.Thread(target=self._research, args=(job_id, request, provider_name, urls, values.get('refresh') is True, explicit_claims), daemon=True).start()
         return {'job_id': job_id}
 
-    def _research(self, job_id, request, provider_name, urls, refresh):
+    def _research(self, job_id, request, provider_name, urls, refresh, explicit_claims=None):
         try:
             provider, error = None, None
             try:
@@ -208,12 +216,16 @@ class Application:
             with self.lock:
                 self.jobs[job_id]['stage'] = 'Discovering sources, fetching documents and extracting evidence…'
             result = research(request, self.policy, urls, self.base, search_provider=provider,
+                              explicit_claims=explicit_claims,
                               review_only=True, automatic=provider_name != 'manual', configuration_error=error)
             state = {'ui_schema': 1, 'id': uuid.uuid4().hex, 'revision': 0, 'updated': now(),
                      'result': result, 'reviews': {}, 'final': None}
             with self.lock:
                 self._save(state)
                 self.jobs[job_id] = {'status': 'complete', 'run_id': state['id']}
+        except OSError:
+            with self.lock:
+                self.jobs[job_id] = {'status': 'failed', 'error': 'Private storage could not be written. Check folder permissions and free disk space, then restart with launch.py --data-dir PATH.'}
         except Exception:
             with self.lock:
                 self.jobs[job_id] = {'status': 'failed', 'error': 'Research could not finish. Check private storage and provider configuration.'}
@@ -278,6 +290,26 @@ class Application:
                     raise UIError('Reviewer name and rationale are required for relevant evidence.')
                 review['material_scope_matches'] = values.get('material_scope_matches') is True
                 review['claim_is_about_announcement'] = values.get('claim_is_about_announcement') is True
+                supersedes = values.get('supersedes', [])
+                if isinstance(supersedes, str):
+                    supersedes = [supersedes] if supersedes else []
+                allowed_old = {item['evidence_id'] for item in state['result']['key_evidence']
+                               if item['claim_id'] == e['claim_id'] and item['evidence_id'] != e['evidence_id']}
+                reason = values.get('supersession_reason', '')
+                if (not isinstance(supersedes, list) or any(not isinstance(s, str) or s not in allowed_old for s in supersedes)
+                        or not isinstance(reason, str) or len(reason) > 2000 or (supersedes and not reason.strip())):
+                    raise UIError('Select an earlier passage for this claim and explain the correction.')
+                if supersedes:
+                    sources = {s['source_id']: s for s in state['result']['sources']}
+                    newer = sources[e['source_id']]
+                    by_id = {item['evidence_id']: item for item in state['result']['key_evidence']}
+                    if (review['strength'] != 'DIRECT' or review['basis'] != 'observation'
+                            or not review['material_scope_matches'] or newer['source_type'] in {'company', 'company_official'}
+                            or not newer.get('publication_date')
+                            or any(not sources[by_id[old]['source_id']].get('publication_date')
+                                   or newer['publication_date'] <= sources[by_id[old]['source_id']]['publication_date'] for old in supersedes)):
+                        raise UIError('A correction needs a strictly newer dated, direct observation with matching scope from a non-company source.')
+                review.update(supersedes=list(dict.fromkeys(supersedes)), supersession_reason=reason.strip())
             source = next(s for s in state['result']['sources'] if s['source_id'] == e['source_id'])
             review.update(claim_id=e['claim_id'], document_hash=source['content_hash'])
             state['reviews'][e['evidence_id']] = review

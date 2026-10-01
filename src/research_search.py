@@ -149,6 +149,9 @@ SEARCH_STOP = set("a an the is are was were has have had do does did what when w
 def keyword_tokens(text):
     # Preserve token identities used by ingestion; retrieval filtering is separate.
     result = tokens(text)
+    from retrieval_constraints import concepts
+    for concept in concepts(text):
+        result[concept] += 1
     # Small retrieval-only vocabulary, not translation or a capability judgment.
     aliases = {'chinese': 'china', 'rockets': 'rocket', 'reusable': 'reuse',
                'flown': 'flight', 'flights': 'flight'}
@@ -165,7 +168,7 @@ def keyword_tokens(text):
                          any(len(x) == 2 and t in x for x in result))})
 
 
-def keyword_scores(texts, question, titles=None):
+def keyword_scores(texts, question, titles=None, *, require_subject=True):
     """Lexical relevance only: BM25, term coverage and adjacent keyword phrases."""
     query = keyword_tokens(question)
     if not query or not texts:
@@ -181,6 +184,10 @@ def keyword_scores(texts, question, titles=None):
     normalize = lambda value: ' '.join(re.findall(r'[a-z0-9]+|[\u3400-\u9fff]', unicodedata.normalize('NFKC', value).lower()))
     scores = []
     for text, title, vector, tv in zip(texts, titles, vectors, title_vectors):
+        from retrieval_constraints import subject_matches
+        if require_subject and not subject_matches(question, title + ' ' + text):
+            scores.append(0.0)
+            continue
         matched = query.keys() & (vector.keys() | tv.keys())
         # One generic shared word is insufficient for a multi-keyword request.
         if not matched or (len(query) >= 3 and len(matched) < 2):
