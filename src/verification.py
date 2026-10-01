@@ -10,8 +10,16 @@ from search_discovery import SearchProvider, ManualURLProvider, query_intents
 
 
 def decompose(request, explicit=None):
-    # Preserve wording; don't infer subjects across conjunctions.
-    texts = explicit if explicit is not None else [x.strip() for x in re.split(r'[;；]\s*|\n+', request.text) if x.strip()]
+    # Conservative shared-subject split; users can override ambiguous decomposition.
+    texts = explicit
+    if texts is None:
+        texts = []
+        for sentence in re.split(r'[;；]\s*|\n+', request.text):
+            parts = re.split(r'\s+and\s+(?=(?:has|have|is|are|was|were)\b)', sentence, flags=re.I)
+            subject = re.match(r'^(.+?)\s+(?:has|have|is|are|was|were|launched|flew|landed)\b', parts[0], re.I)
+            for i, part in enumerate(parts):
+                if part.strip():
+                    texts.append(((subject.group(1) + ' ') if i and subject else '') + part.strip())
     if not texts or len(texts) > 20 or any(not isinstance(t, str) or not t.strip() for t in texts):
         raise ValueError('Invalid atomic claims')
     return [AtomicClaim(f'c{i}', request.id, t, temporal_scope=request.requested_as_of_date)
@@ -167,17 +175,34 @@ def assess(request, claims, documents, evidence, reviews=None, failures=None, re
     sufficiency = ('INSUFFICIENT' if verdict == Verdict.INSUFFICIENT.value else
                    'PARTIAL' if failures or verdict in {Verdict.MIXED.value, Verdict.MOSTLY_TRUE.value} else 'SUFFICIENT')
     unresolved = [a['claim_id'] for a in assessments if a['verdict'] == Verdict.MIXED.value]
+    answer_points, comparisons = [], []
+    if not review_only:
+        for claim, assessment in zip(claims, assessments):
+            groups = {name: assessment[name + '_evidence_ids'] for name in ('supporting', 'contradicting', 'qualifying')}
+            comparisons.append({'claim_id': claim.claim_id, 'claim': claim.text,
+                                'verdict': assessment['verdict'], **groups})
+            for eid in dict.fromkeys(eid for ids in groups.values() for eid in ids):
+                record = next(e for e in valid if e.evidence_id == eid)
+                fact = accepted[eid].get('normalized_fact', '').strip()
+                if fact:
+                    answer_points.append({'claim_id': claim.claim_id, 'evidence_id': eid,
+                                          'source_id': record.source_id, 'stance': record.stance,
+                                          'text': fact[:400]})
+    answer = ('Evidence is awaiting human review.' if review_only else
+              'The supplied reviewed evidence does not establish an answer.' if verdict == Verdict.INSUFFICIENT.value else
+              'Reviewed findings: ' + ' '.join(p['stance'] + ': ' + p['text'] for p in answer_points[:3]) if answer_points else
+              ' '.join(f"{c.text} - reviewed assessment: {a['verdict'].replace('_', ' ').lower()}."
+                       for c, a in zip(claims, assessments))[:1600])
     return {'request': asdict(request), 'request_type': request.request_type,
             'as_of_date': request.requested_as_of_date, 'verdict': None if review_only else verdict,
             'evidence_sufficiency': sufficiency, 'review_only': review_only,
-            'short_answer': 'Evidence is awaiting human review.' if review_only else
-                'The supplied reviewed evidence does not establish an answer.' if verdict == Verdict.INSUFFICIENT.value else
-                'Reviewed evidence assessment: ' + verdict.replace('_', ' ').lower() + '.',
+            'short_answer': answer, 'answer_points': answer_points,
             'explanation': 'This result is limited to the retrieved documents and explicit human assessments. '
                            'Lexical matches, official attribution, and repeated reporting are not independent proof.',
             'atomic_claims': [asdict(c) for c in claims], 'assessments': [] if review_only else assessments,
             'key_evidence': [asdict(e) for e in valid], 'sources': [asdict(d.source) for d in documents],
             'source_differences': {'likely_dependencies': dependencies, 'unresolved_conflicts': unresolved,
+                                   'reviewed_comparisons': comparisons,
                                    'superseded_evidence_ids': sorted(superseded),
                                    'future_evidence_ids': temporal_exclusions},
             'uncertainties': ['Unlinked sources are not proven independent.',
@@ -192,7 +217,7 @@ def markdown(result):
     q = result['request_type'] == 'QUESTION'
     safe = lambda t: re.sub(r'([\\`*_{}\[\]<>#!])', r'\\\1', str(t)).replace('\n', ' ')
     lines = ['# ' + ('Answer' if q else 'Verification'), '',
-             result['short_answer'] if q or result['review_only'] or result['verdict'] is None else '**' + result['verdict'] + '**', '',
+             safe(result['short_answer']) if q or result['review_only'] or result['verdict'] is None else '**' + result['verdict'] + '**', '',
              'As of ' + result['as_of_date'] + '. ' + result['explanation'], '',
              'Scope: ' + result.get('research_scope', 'supplied documents only'), '', '## What the evidence supports', '']
     claim_text = {c['claim_id']: c['text'] for c in result['atomic_claims']}

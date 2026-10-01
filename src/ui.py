@@ -9,6 +9,7 @@ import secrets
 from urllib.parse import urlsplit
 
 from ui_service import Application, UIError
+from verification_models import digest
 
 ASSETS = Path(__file__).resolve().parent / 'ui_assets'
 
@@ -50,6 +51,9 @@ def create_server(port=8000, application=None):
             path = urlsplit(self.path).path
             if not self.allowed(path.startswith('/api/')):
                 return self.send({'error': 'Local request rejected.'}, 403)
+            if path == '/health':
+                return self.send({'application': 'technical-research-engine', 'configured': app is not None,
+                                  'storage_id': digest(str(app.base)) if app else None})
             assets = {'/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
             if path in assets:
                 file, mime = assets[path]
@@ -73,6 +77,8 @@ def create_server(port=8000, application=None):
                 return self.send({'error': 'Not found.'}, 404)
             except UIError as exc:
                 self.send({'error': str(exc)}, 400)
+            except OSError:
+                self.send({'error': 'Unable to read private research. Check folder access and available storage.'}, 400)
             except Exception:
                 self.send({'error': 'Unable to read private research state safely.'}, 400)
 
@@ -107,6 +113,8 @@ def create_server(port=8000, application=None):
                 return self.send({'error': 'Not found.'}, 404)
             except UIError as exc:
                 self.send({'error': str(exc)}, 400)
+            except OSError:
+                self.send({'error': 'Unable to save private research. Check folder write permissions and free disk space; restart with launch.py --data-dir PATH.'}, 400)
             except Exception:
                 self.send({'error': 'Request failed. Check the fields and private configuration.'}, 400)
 
@@ -116,14 +124,5 @@ def create_server(port=8000, application=None):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--port', type=int, default=8000)
-    args = parser.parse_args()
-    try:
-        server = create_server(args.port)
-        print(f'Open http://127.0.0.1:{server.server_port} — local research UI. Press Ctrl+C to stop.')
-        server.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    except Exception:
-        print('Could not start the local UI. Check the port is available.', file=sys.stderr)
+    from startup import main
+    raise SystemExit(main())

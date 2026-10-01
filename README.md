@@ -30,7 +30,7 @@ Live search integration validation, evaluated semantic interpretation, substanti
 
 ## Local Web UI
 
-Start the private browser workflow with `python -B src/ui.py`, then open
+Start the private browser workflow with `python -B launch.py --data-dir C:\ResearchPrivate`, then open
 http://127.0.0.1:8000. Set `TECH_RESEARCH_DATA_DIR` to an existing external,
 non-Git directory first. The UI supports research, source inspection, human
 review, verification, private history, and JSON/Markdown export. Local search
@@ -38,6 +38,12 @@ is the default; Brave and SearXNG require explicit selection.
 Enter a question → Research → Review evidence → Verify → Read/export.
 Automatic source discovery does not eliminate human evidence review.
 See [local UI setup and workflow](docs/local-ui.md).
+
+The launcher checks private-folder writes and detects an existing server before
+starting. Use an absolute path to `launch.py` when launching from another folder.
+An older server must be stopped and restarted to load updated code.
+See [acceptance improvements and frozen evaluation](docs/acceptance-improvements.md)
+for retrieval coverage diagnostics, atomic claims and reviewed corrections.
 
 ## Run
 

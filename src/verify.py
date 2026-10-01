@@ -105,6 +105,14 @@ def research(request, policy, urls, base, offline=False, captures=None, reviews=
             if not offline:
                 time.sleep(.25)
     evidence = candidates(claims, documents)
+    from retrieval_constraints import coverage
+    discovery['passage_diagnostics'] = []
+    for claim in claims:
+        diagnostic = coverage(claim.text, [p['passage'] for doc in documents for p in doc.passages])
+        diagnostic['claim_id'] = claim.claim_id
+        if any(e.claim_id == claim.claim_id for e in evidence):
+            diagnostic['status'] = 'MATCHES_FOUND'
+        discovery['passage_diagnostics'].append(diagnostic)
     result = assess(request, claims, documents, evidence, reviews, failures, review_only)
     # A failed automatic search is a process failure, never a factual verdict.
     # Legacy manual/local assessment retains its existing, explicitly limited scope.
