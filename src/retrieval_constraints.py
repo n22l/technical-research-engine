@@ -17,7 +17,7 @@ GROUPS = {
     'webb': ('webb', 'jwst', '韦布', '韦伯'),
     'rocket': ('rocket', 'rockets', '火箭'),
     'reuse': ('reuse', 'reusable', 'reused', '重复使用', '复用'),
-    'reflight': ('reflight', 'reflown', 'refly', '复飞'),
+    'reflight': ('reflight', 're-flight', 'reflown', 'refly', '复飞'),
     'recovery': ('recovery', 'recovered', 'landing', 'landed', '回收', '着陆'),
     'l2': ('l2', 'second lagrange', '第二拉格朗日'),
 }

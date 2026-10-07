@@ -2,6 +2,13 @@
 
 # Evaluation plan
 
+The [sitewide retrieval benchmark](retrieval-ranking.md#reproducible-evaluation)
+reports Document Hit@5, Passage Hit@5, Passage MRR and exact-sentence retrieval on
+seven synthetic cases, with a reproducible historical Git baseline. Crawl tests cover
+13 sitemap files, resumption, deep paths, explicit subdomains, robots, traps and
+offline reindexing. Three bounded NASA HTML/PDF smoke checks succeeded; their exact
+passages remain private. These measurements do not establish verdict accuracy.
+
 Automatic discovery now has synthetic API/selection tests in `tests/test_search_discovery.py`. `search_discovery.evaluate_discovery(selected_urls, expected_authoritative_domains, forbidden_domains, k)` computes expected-domain recall, labeled approved-URL precision and forbidden selections. The denominator for recall is unique expected domains; precision uses selected URLs at k. Empty expected sets or selected lists produce null for the relevant metric. These are fixture metrics, not production scores. API contract tests use mocked HTTP; no live-search accuracy is claimed.
 
 **Status: Synthetic retrieval smoke evaluation implemented; broader protocol proposed.**

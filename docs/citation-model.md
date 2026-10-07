@@ -1,5 +1,11 @@
 # Citation model
 
+Candidate `retrieval_match` now contains passage/sentence IDs, the exact best sentence,
+paragraph-relative character spans and lexical match explanations. Sentence slices
+are validated against the original paragraph; document-relative paragraph offsets
+and physical PDF page locators remain authoritative. Highlights are presentation-only.
+The report retains full paragraph context. See [ranking and locations](retrieval-ranking.md).
+
 Source identity combines URL and raw-content SHA-256; raw capture hash and retrieval timestamp remain auditable. Same-host canonical URLs are hints and cannot transfer authority to other publishers.
 
 HTML preserves title, recognized publication metadata, language, headings and paragraph/list blocks. Scripts/styles/templates are excluded. Exact passage means extracted text (entities decoded and outer whitespace trimmed), not raw HTML. Paragraph numbers are extracted-document locators; offsets refer to joined extracted text.

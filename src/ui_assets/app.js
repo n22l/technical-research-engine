@@ -66,6 +66,7 @@ function render() {
   add(summary,el('p',r.research_scope),el('p',`As of ${r.as_of_date} · Provider: ${s.provider}`,'muted'));
   if(s.indexed_at)add(summary,el('p',`Index: ${s.indexed_at} · ${s.indexed_pages} documents · ${s.cache_used?'cached':'refreshed'} · Pending URLs: ${s.pending_urls||0} · Stale documents: ${s.stale_pages||0} · Indexed hosts: ${(s.index_hosts||[]).join(', ')}`,'muted'));
   if(s.provider==='local' && s.missing_index_hosts?.length)summary.append(el('p',`Approved hosts with no indexed pages: ${s.missing_index_hosts.join(', ')}. Approval does not guarantee coverage; refresh the local index to continue discovery.`, 'warning'));
+  if(s.site_coverage?.length){const coverage=el('details');coverage.append(el('summary','Publisher coverage'));for(const c of s.site_coverage)coverage.append(el('p',`${c.publisher}: ${c.status} · ${c.indexed_urls} indexed / ${c.discovered_urls} discovered · ${c.pending_urls} pending · ${c.blocked_urls} blocked · ${c.failed_urls} failed · ${c.sitemap_urls} sitemaps`));summary.append(coverage);}
   for(const diagnostic of s.query_diagnostics||[]){
     if(diagnostic.status==='MISSING_COVERAGE')summary.append(el('p',`Missing index coverage for: ${diagnostic.missing_subjects.join(', ')||'this query'}. Refresh or supply an approved article URL; this is not evidence that the event did not occur.`, 'warning'));
     else if(diagnostic.status==='WEAK_RELEVANCE')summary.append(el('p','Index terms exist, but no page met the query subject constraints. Retrieval relevance is too weak.', 'warning'));
@@ -82,6 +83,17 @@ function render() {
   const list=r.key_evidence.filter(e=>filter==='All'||(filter==='Unreviewed'?!state.reviews[e.evidence_id]:state.reviews[e.evidence_id]?.stance===filter));
   if(list.length){selected=Math.min(selected,list.length-1);const e=list[selected],source=r.sources.find(s=>s.source_id===e.source_id),saved=state.reviews[e.evidence_id]||{};
     add(review,el('p',`Candidate ${selected+1} of ${list.length} · ${e.claim_id}`,'muted'),el('h3',r.atomic_claims.find(c=>c.claim_id===e.claim_id)?.text||''),el('p',`${source.publisher} — ${source.title} — ${source.publication_date||'Date unknown'}`),el('p',locationText(e.location),'muted'),el('blockquote',e.exact_passage));
+    const match=e.retrieval_match;
+    if(match?.best_sentence){
+      const b=match.best_sentence,chars=Array.from(e.exact_passage);
+      if(chars.slice(b.character_start,b.character_end).join('')===b.text){
+        const sentence=el('blockquote'),text=Array.from(b.text);let cursor=0;
+        for(const [a,z] of b.match?.highlight_spans||[]){if(Number.isInteger(a)&&Number.isInteger(z)&&a>=cursor&&z>a&&z<=text.length){sentence.append(document.createTextNode(text.slice(cursor,a).join('')),el('mark',text.slice(a,z).join('')));cursor=z;}}
+        sentence.append(document.createTextNode(text.slice(cursor).join('')));
+        const paragraph=review.querySelector('blockquote');paragraph.before(el('h3','Most relevant sentence'),sentence,el('h3','Paragraph context'));
+        const why=el('details');add(why,el('summary','Why this matched'),el('p',`Matched terms: ${match.matched_terms.join(', ')} · ${match.match_level} · Coverage: ${Math.round(match.term_coverage*100)}%`),el('p','Retrieval ranking only; this is not proof.','muted'));review.append(why);
+      }
+    }
     if(e.passage_truncated)review.append(el('p','Passage preview shortened. Read the original before reviewing.','muted'));review.append(link(source.url));
     const form=el('form'), fields=el('div',undefined,'grid');form.append(fields);
     selectField(fields,'relevant','Relevance',[['','Choose…'],['true','Relevant'],['false','Not relevant']],saved.relevant===undefined?'':String(saved.relevant));
@@ -123,6 +135,7 @@ function renderFinal(root,r){const box=el('section',undefined,'panel');box.id='f
   const actions=el('div',undefined,'actions');for(const format of ['json','markdown'])actions.append(button('Export '+format.toUpperCase(),async()=>{const response=await fetch(`/api/export/${state.id}/${format}`,{headers:{'X-UI-Token':token}});if(!response.ok){const data=await response.json();throw Error(data.error);}const blob=await response.blob(),url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download=`research-${state.id}.${format==='json'?'json':'md'}`;a.textContent='Download '+format.toUpperCase()+' report';const previous=actions.querySelector('a[data-export]');if(previous){URL.revokeObjectURL(previous.href);previous.remove();}a.dataset.export=format;actions.append(a);a.click();}));box.append(actions);root.append(box);
 }
 async function init(){config=await api('/api/config');if(!config.configured){$('setup').hidden=false;$('research-form').hidden=true;return;}for(const option of $('provider').options){if(!config.providers[option.value]){option.disabled=true;option.textContent+=' · not configured';}}
+  selectField($('research-form').querySelector('details'),'publisher','Search publisher',[['','All approved publishers'],...Array.from(new Set(config.sources.filter(s=>s.allowed).map(s=>s.publisher))).sort()]);
   for(const [name,available] of Object.entries(config.providers)){const c=el('div',undefined,'card');add(c,el('h3',name==='local'?'Free local index · default':name),el('p',available?'Configured / available':'Not configured'),el('p',name==='brave'?'May incur API charges. Explicit selection only.':'No automatic provider switching.','muted'));$('provider-status').append(c);}
   config.sources.forEach(s=>{const c=el('article',undefined,'card');add(c,el('h3',s.publisher),el('p',s.host),el('p',`Tier ${s.tier} · ${s.type} · ${s.allowed?'Allowed':'Not allowed'}`,'muted'));$('source-list').append(c);});
 }

@@ -130,6 +130,7 @@ class Application:
                    'indexed_at': local.get('indexed_at'), 'indexed_pages': local.get('indexed_pages'),
                    'cache_used': local.get('cache_used'), 'pending_urls': local.get('pending_urls', 0),
                    'query_diagnostics': local.get('query_diagnostics', []),
+                   'site_coverage': local.get('site_coverage', []),
                    'passage_diagnostics': search.get('passage_diagnostics', []),
                    'stale_pages': local.get('stale_pages', 0), 'index_hosts': local.get('hosts', []),
                    'missing_index_hosts': sorted(h for h, rule in self.policy.rules.items()
@@ -158,8 +159,7 @@ class Application:
                 if record is not r:
                     record.pop('search', None)
                 for e in record['key_evidence']:
-                    e['passage_truncated'] = len(e['exact_passage']) > 1200
-                    e['exact_passage'] = e['exact_passage'][:1200]
+                    e['passage_truncated'] = False
         state['can_verify'] = (self._ready(state) and not state['integrity_error']
                                and search['status'] != 'SEARCH_FAILED')
         return state
@@ -187,6 +187,9 @@ class Application:
         if provider_name == 'manual':
             provider_name = 'local'
         urls = values.get('urls', [])
+        publisher = values.get('publisher') or None
+        if publisher is not None and publisher not in {r['publisher'] for r in self.policy.rules.values() if r.get('allowed')}:
+            raise UIError('Choose an approved publisher.')
         explicit_claims = values.get('atomic_claims')
         if isinstance(explicit_claims, str):
             explicit_claims = [line.strip() for line in explicit_claims.splitlines() if line.strip()] or None
@@ -203,14 +206,14 @@ class Application:
             job_id = uuid.uuid4().hex
             self.jobs[job_id] = {'status': 'running', 'stage': 'Preparing research…'}
             self.busy = True
-        threading.Thread(target=self._research, args=(job_id, request, provider_name, urls, values.get('refresh') is True, explicit_claims), daemon=True).start()
+        threading.Thread(target=self._research, args=(job_id, request, provider_name, urls, values.get('refresh') is True, explicit_claims, publisher), daemon=True).start()
         return {'job_id': job_id}
 
-    def _research(self, job_id, request, provider_name, urls, refresh, explicit_claims=None):
+    def _research(self, job_id, request, provider_name, urls, refresh, explicit_claims=None, publisher=None):
         try:
             provider, error = None, None
             try:
-                provider = configured_provider(provider_name, base=self.base, policy=self.policy, refresh=refresh)
+                provider = configured_provider(provider_name, base=self.base, policy=self.policy, refresh=refresh, publisher_filter=publisher)
             except SearchError as exc:
                 error = exc.code
             with self.lock:

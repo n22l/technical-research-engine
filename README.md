@@ -8,6 +8,16 @@ Given a factual question or claim, the system is being developed to search autho
 
 ## Implemented now
 
+- Recursive bounded publisher discovery, explicit subdomains, coverage inventories,
+  passage/sentence BM25 ranking and exact highlighted sentence context. See
+  [retrieval usage, limits and benchmark](docs/retrieval-ranking.md).
+
+Synthetic example: query `reusable booster reflight` returns a fictional Agency
+article at `https://agency.example/flight`, title *Flight record*, with most relevant
+sentence "The reusable booster completed reflight." and its containing paragraph.
+Location: section *Flight*, extracted paragraph 1. Matched terms: reusable, booster,
+reflight. This explains retrieval relevance, not factual truth.
+
 - Preserved prepared-text ingestion, English/Chinese lexical passage retrieval, source metadata and Hit@5 evaluation, including the legacy CLI.
 - Request/claim records; conservative semicolon/newline splitting or explicit atomic claims.
 - Bounded deterministic query intents, Brave API adapter, URL deduplication and auditable source selection with publisher diversity.

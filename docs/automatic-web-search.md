@@ -1,5 +1,12 @@
 # Automatic web discovery
 
+The local provider now uses [publisher scopes, recursive sitemaps and passage ranking](retrieval-ranking.md).
+Use `--site NASA` for all explicitly configured NASA hosts, or choose Search publisher
+in the UI. `src/site_index.py` supports publisher refresh, explicit deep mode,
+coverage reporting and offline capture reindexing. Coverage remains bounded; pending,
+blocked and failed URLs are visible. External provider snippets stay discovery-only;
+local extracted evidence is a separate field and must pass citation validation.
+
 Discovery defaults to a free local crawler/index (see below). Optional external discovery uses the documented [Brave Web Search API](https://api-dashboard.search.brave.com/api-reference/web/search/get), using HTTPS GET `/res/v1/web/search`. Only fetched and parsed documents can become evidence. API titles, descriptions, summaries and snippets are never evidence.
 
 ## Configuration and first run

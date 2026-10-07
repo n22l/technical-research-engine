@@ -1,6 +1,10 @@
 # Architecture
 
-The original `research_search.py` ingestion, TF-IDF ranking, privacy checks and evaluation are unchanged; `space_search.py` remains compatible.
+Prepared-text ingestion, privacy checks and the legacy CLI remain compatible.
+`passage_ranking.py` now supplies BM25 passage/sentence candidates to verification;
+`local_search.py` aggregates passage hits into page discovery. Assessment rules are
+unchanged. [Retrieval architecture and private schema 4](retrieval-ranking.md)
+describe publisher inventories, capture-backed reindexing and migration.
 
 The separate `verify.py` CLI composes `verification_models.py` (records), `web_sources.py` (policy/fetch/parse), `verification.py` (provider protocol, query intents, existing retrieval, dependency hints, citations, reviewed assessment and rendering), and optional `domains/aerospace/rules.py` maturity guards.
 

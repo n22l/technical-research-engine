@@ -1,5 +1,5 @@
 """Bounded discovery only. Search titles/snippets never enter document evidence."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import http.client
 import ipaddress
 import json
@@ -31,6 +31,7 @@ class SearchResult:
     provider: str
     rank: int
     discovered_at: str
+    local_match: dict = field(default_factory=dict)
 
 
 class SearchProvider(Protocol):
@@ -116,13 +117,13 @@ class BraveSearchProvider:
             conn.close()
 
 
-def configured_provider(name=None, *, base=None, policy=None, max_pages=500, refresh=False):
+def configured_provider(name=None, *, base=None, policy=None, max_pages=500, refresh=False, publisher_filter=None):
     name = name if name is not None else os.environ.get('TECH_RESEARCH_SEARCH_PROVIDER', 'local')
     if name == 'local':
         if base is None or policy is None:
             raise SearchError('SEARCH_UNAVAILABLE')
         from local_search import LocalSearchProvider
-        return LocalSearchProvider(base, policy, max_pages, refresh)
+        return LocalSearchProvider(base, policy, max_pages, refresh, publisher_filter=publisher_filter)
     if name == 'manual':
         return None
     if name == 'brave':

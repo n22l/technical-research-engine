@@ -17,7 +17,7 @@ class LocalTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, patch('local_search.time.sleep'), patch('local_search.Fetcher.fetch', side_effect=self.fetch) as fetch:
             provider = LocalSearchProvider(Path(tmp), self.policy, max_pages=3)
             results = provider.search('booster', limit=5)
-            self.assertEqual(len(results), 2)
+            self.assertEqual(len(results), 1)  # Identical paragraphs do not dominate results.
             self.assertTrue(all(r.snippet == '' for r in results))
             self.assertNotIn('https://agency.example/private', [c.args[0] for c in fetch.call_args_list])
             self.assertNotIn('https://evil.example/', [c.args[0] for c in fetch.call_args_list])

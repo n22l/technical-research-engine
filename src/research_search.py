@@ -149,12 +149,14 @@ SEARCH_STOP = set("a an the is are was were has have had do does did what when w
 def keyword_tokens(text):
     # Preserve token identities used by ingestion; retrieval filtering is separate.
     result = tokens(text)
+    for technical in re.findall(r'[A-Za-z]+(?:-[A-Za-z0-9]+)+', text.lower()):
+        result[technical] += 1
     from retrieval_constraints import concepts
     for concept in concepts(text):
         result[concept] += 1
     # Small retrieval-only vocabulary, not translation or a capability judgment.
     aliases = {'chinese': 'china', 'rockets': 'rocket', 'reusable': 'reuse',
-               'flown': 'flight', 'flights': 'flight'}
+               'flown': 'flight', 'flights': 'flight', 're-flight': 'reflight'}
     for alias, canonical in aliases.items():
         if alias in result:
             result[canonical] += result.pop(alias)

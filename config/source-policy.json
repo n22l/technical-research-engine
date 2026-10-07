@@ -4,6 +4,7 @@
       "tier": 1,
       "type": "government",
       "publisher": "NASA",
+      "crawl_hosts": ["science.nasa.gov"],
       "allowed": true,
       "official": true,
       "primary": true,

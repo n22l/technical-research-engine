@@ -154,6 +154,7 @@ def main(argv=None):
         parser.add_argument('--search-provider', choices=['local', 'manual', 'brave', 'searxng'])
         parser.add_argument('--max-crawl-pages', type=int, default=500)
         parser.add_argument('--refresh-local-index', action='store_true')
+        parser.add_argument('--site', help='Exact approved publisher name or host; local search only')
         parser.add_argument('--policy', help='Policy filename relative to external private directory')
         parser.add_argument('--max-sources', type=int, default=8)
         parser.add_argument('--max-queries', type=int, default=8)
@@ -189,7 +190,8 @@ def main(argv=None):
         if not args.offline:
             try:
                 provider = configured_provider(provider_name, base=base, policy=policy,
-                                               max_pages=args.max_crawl_pages, refresh=args.refresh_local_index)
+                                               max_pages=args.max_crawl_pages, refresh=args.refresh_local_index,
+                                               publisher_filter=args.site)
             except SearchError as exc:
                 configuration_error = exc.code
         urls = bundle.get('urls', []) + args.url
