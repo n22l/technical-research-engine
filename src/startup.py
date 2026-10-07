@@ -3,6 +3,8 @@ import argparse
 import http.client
 import json
 import os
+import errno
+import socket
 import uuid
 from research_search import external_directory, private_directory, SafeError
 from verification_models import digest
@@ -45,7 +47,20 @@ def existing_server(port):
         return {'other_service': True}
     except ConnectionRefusedError:
         return None
-    except (OSError, ValueError, http.client.HTTPException):
+    except OSError:
+        # Windows can time out before returning connection-refused on a free
+        # loopback port. Test ownership rather than equating failure with use.
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+                if hasattr(socket, 'SO_EXCLUSIVEADDRUSE'):
+                    probe.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+                probe.bind(('127.0.0.1', port))
+            return None
+        except OSError as exc:
+            if exc.errno == errno.EADDRINUSE or getattr(exc, 'winerror', None) == 10048:
+                return {'other_service': True}
+            raise SafeError('Cannot check the local port. Check local network permissions or run the launcher outside the restricted environment.') from None
+    except (ValueError, http.client.HTTPException):
         return {'other_service': True}
     finally:
         connection.close()
