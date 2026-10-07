@@ -10,6 +10,8 @@ from html.parser import HTMLParser
 from urllib.parse import urlsplit, urljoin
 from datetime import date
 from pathlib import Path
+import posixpath
+from urllib.parse import unquote
 from verification_models import SourceRecord, Document, EvidenceLocation, digest, now
 
 
@@ -25,7 +27,13 @@ def public_url(url):
 
 class SourcePolicy:
     def __init__(self, rules):
-        self.rules = rules
+        self.rules = {host: dict(rule) for host, rule in rules.items()}
+        for host, rule in list(self.rules.items()):
+            for child in rule.get('crawl_hosts', []):
+                if not isinstance(child, str) or child != child.lower() or public_url('https://' + child).hostname != child:
+                    raise ValueError('Invalid explicit crawl host')
+                if child not in self.rules:
+                    self.rules[child] = dict(rule, crawl_hosts=[], crawl_seeds=['https://' + child + '/'], sitemaps=[], feeds=[])
 
     @classmethod
     def load(cls, path):
@@ -36,7 +44,15 @@ class SourcePolicy:
         # Exact host rules win; subdomains require explicit opt-in.
         for domain, rule in sorted(self.rules.items(), key=lambda x: -len(x[0])):
             if host == domain or (rule.get('include_subdomains', False) and host.endswith('.' + domain)):
-                return dict(rule, registered=True)
+                path = posixpath.normpath(unquote(urlsplit(url).path or '/'))
+                if '%' in path or '\\' in path:
+                    return dict(rule, allowed=False, registered=True)
+                if urlsplit(url).path.endswith('/') and not path.endswith('/'): path += '/'
+                prefixes = rule.get('allowed_path_prefixes', ['/'])
+                excluded = rule.get('excluded_path_prefixes', [])
+                permitted = path == '/robots.txt' or (any(path.startswith(p) for p in prefixes)
+                             and not any(path.startswith(p) for p in excluded))
+                return dict(rule, allowed=bool(rule.get('allowed') and permitted), registered=True)
         return {'allowed': False, 'tier': None, 'type': 'discovery_only', 'publisher': host, 'registered': False}
 
 
@@ -53,10 +69,15 @@ class PageParser(HTMLParser):
         self.links = []
         self.language = 'unknown'
         self.canonical = None
+        self.in_main = 0
+        self.main_blocks = []
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
-        if tag in {'script', 'style', 'noscript', 'template'}:
+        if tag in {'main', 'article'}:
+            self.flush()
+            self.in_main += 1
+        if tag in {'script', 'style', 'noscript', 'template', 'nav', 'header', 'footer', 'aside'}:
             self.hidden += 1
         if self.hidden:
             return
@@ -75,7 +96,10 @@ class PageParser(HTMLParser):
             self.parts.append('\n')
 
     def handle_endtag(self, tag):
-        if tag in {'script', 'style', 'noscript', 'template'}:
+        if tag in {'main', 'article'}:
+            self.flush()
+            self.in_main = max(0, self.in_main - 1)
+        if tag in {'script', 'style', 'noscript', 'template', 'nav', 'header', 'footer', 'aside'}:
             self.hidden = max(0, self.hidden - 1)
         elif not self.hidden and tag == self.active:
             self.flush()
@@ -93,6 +117,8 @@ class PageParser(HTMLParser):
                 self.heading = text
             else:
                 self.blocks.append((text, None, self.heading))
+                if self.in_main:
+                    self.main_blocks.append((text, None, self.heading))
         self.active, self.parts = None, []
 
 
@@ -124,7 +150,7 @@ def parse_document(url, body, media_type, policy):
         parser = PageParser()
         parser.feed(body.decode('utf-8', errors='strict'))
         parser.flush()
-        blocks, title, language = parser.blocks, parser.title, parser.language
+        blocks, title, language = parser.main_blocks or parser.blocks, parser.title, parser.language
         published = iso_date(parser.meta.get('article:published_time') or parser.meta.get('date'))
         author = parser.meta.get('author')
         if parser.canonical:
@@ -180,6 +206,8 @@ class Fetcher:
     def __init__(self, policy, max_bytes=4_000_000, timeout=15, accept='text/html, application/pdf'):
         self.policy, self.max_bytes, self.timeout = policy, max_bytes, timeout
         self.accept = accept
+        self.validators = {}
+        self.response_metadata = {}
 
     def fetch(self, url):
         # No redirects, proxies, cookies, authentication, or automatic retries.
@@ -191,10 +219,18 @@ class Fetcher:
             raise ValueError('Nonpublic address')
         conn = PinnedHTTPS(p.hostname, sorted(addresses)[0], self.timeout)
         try:
+            headers = {'User-Agent': 'TechnicalResearchEngine/0.2 (manual public-source research)',
+                       'Accept': self.accept, 'Accept-Encoding': 'identity'}
+            for name in ('If-None-Match', 'If-Modified-Since'):
+                value = self.validators.get(name)
+                if isinstance(value, str) and len(value) <= 1024 and not any(ord(c) < 32 for c in value):
+                    headers[name] = value
             conn.request('GET', (p.path or '/') + ('?' + p.query if p.query else ''),
-                         headers={'User-Agent': 'TechnicalResearchEngine/0.2 (manual public-source research)',
-                                  'Accept': self.accept, 'Accept-Encoding': 'identity'})
+                         headers=headers)
             response = conn.getresponse()
+            self.response_metadata = {'etag': response.getheader('ETag'), 'last_modified': response.getheader('Last-Modified')}
+            if response.status == 304 and any(k in headers for k in ('If-None-Match', 'If-Modified-Since')):
+                return None, None
             if response.status != 200:
                 raise FetchError(response.status)
             if response.getheader('Content-Encoding', 'identity') != 'identity':

@@ -117,6 +117,7 @@ class EvidenceRecord:
     source_independence_group: str | None = None
     status: str = 'UNKNOWN'
     notes: list = field(default_factory=list)
+    retrieval_match: dict = field(default_factory=dict)
 
 
 def to_dict(record):

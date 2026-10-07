@@ -59,17 +59,24 @@ def validate_citation(evidence, documents, claim_ids):
         return False
     if not (0 <= loc.character_start < loc.character_end <= len(doc.text)):
         return False
+    best = evidence.retrieval_match.get('best_sentence') if evidence.retrieval_match else None
+    if best and (type(best.get('character_start')) is not int or type(best.get('character_end')) is not int
+                 or not 0 <= best['character_start'] < best['character_end'] <= len(evidence.exact_passage)
+                 or evidence.exact_passage[best['character_start']:best['character_end']] != best.get('text')):
+        return False
     return any(p['location'] == loc and p['passage'] == evidence.exact_passage
                for p in doc.passages) and doc.text[loc.character_start:loc.character_end] == evidence.exact_passage
 
 
 def candidates(claims, documents, limit=5):
+    from passage_ranking import rank_passages
     all_passages = [p for d in documents for p in d.passages]
     records = []
     for claim in claims:
-        for p in search(all_passages, claim.text, limit):
+        for p in rank_passages(all_passages, claim.text, limit):
             eid = digest(claim.claim_id + '\n' + claim.text + '\n' + p['passage_id'])[:24]
-            records.append(EvidenceRecord(eid, claim.claim_id, p['source']['id'], p['passage'], p['location']))
+            records.append(EvidenceRecord(eid, claim.claim_id, p['source']['id'], p['passage'], p['location'],
+                                          retrieval_match=p['retrieval_match']))
     return records
 
 
@@ -236,6 +243,11 @@ def markdown(result):
                   f"{e['stance']}; {safe(where)}. [Source]({s['url'].replace(')', '%29').replace('(', '%28')})."]
         if e['normalized_passage']:
             lines.append('  Reviewed interpretation: ' + safe(e['normalized_passage'][:400]))
+        match = e.get('retrieval_match', {})
+        if match.get('best_sentence'):
+            lines.append('  Most relevant sentence: ' + safe(match['best_sentence']['text']))
+            lines.append('  Paragraph context: ' + safe(e['exact_passage']))
+            lines.append('  Retrieval match (not proof): ' + safe(', '.join(match['matched_terms'])))
     lines += ['', '## Where sources differ', '',
               'Unresolved claim conflicts: ' + (', '.join(result['source_differences']['unresolved_conflicts']) or 'none established'),
               'Likely dependency relationships: ' + str(len(result['source_differences']['likely_dependencies'])),

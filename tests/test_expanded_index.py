@@ -25,7 +25,7 @@ class ExpandedIndexTests(unittest.TestCase):
 
     def test_sitemap_discovery_resumes_without_losing_existing_entries(self):
         with patch('local_search.time.sleep'), patch('local_search.Fetcher.fetch', side_effect=self.fetch) as fetch:
-            first = LocalSearchProvider(self.base, self.policy, max_pages=10, per_host=2)
+            first = LocalSearchProvider(self.base, self.policy, max_pages=10, per_host=1)
             first.search('booster')
             self.assertEqual(len(first.entries), 1)
             self.assertGreater(first.audit['pending_urls'], 0)
@@ -46,7 +46,7 @@ class ExpandedIndexTests(unittest.TestCase):
                 discovery_links(body, 'https://agency.example/')
 
     def test_time_budget_saves_pending_work(self):
-        with patch('local_search.time.sleep'), patch('local_search.Fetcher.fetch', side_effect=self.fetch), patch('local_search.time.monotonic', side_effect=[0, 0, 121]):
+        with patch('local_search.time.sleep'), patch('local_search.Fetcher.fetch', side_effect=self.fetch), patch('local_search.time.monotonic', side_effect=[0, 0, 0, 0, 121]):
             provider = LocalSearchProvider(self.base, self.policy)
             provider.search('booster')
             self.assertEqual(provider.audit['page_attempts'], 1)
