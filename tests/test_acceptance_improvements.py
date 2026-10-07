@@ -83,6 +83,22 @@ class AcceptanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory, patch('startup.existing_server', return_value={'other_service': True}):
             self.assertEqual(main(['--data-dir', directory]), 2)
 
+    def test_probe_timeout_does_not_mislabel_free_port(self):
+        import socket
+        with socket.socket() as reservation:
+            reservation.bind(('127.0.0.1', 0))
+            port = reservation.getsockname()[1]
+        with patch('startup.http.client.HTTPConnection.request', side_effect=TimeoutError):
+            self.assertIsNone(existing_server(port))
+
+    def test_probe_timeout_preserves_occupied_port(self):
+        import socket
+        with socket.socket() as listener:
+            listener.bind(('127.0.0.1', 0))
+            listener.listen()
+            with patch('startup.http.client.HTTPConnection.request', side_effect=TimeoutError):
+                self.assertTrue(existing_server(listener.getsockname()[1])['other_service'])
+
 
 if __name__ == '__main__':
     unittest.main()
