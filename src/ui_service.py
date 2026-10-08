@@ -128,6 +128,7 @@ class Application:
                    'parsed': len(r['sources']), 'evidence': len(r['key_evidence']),
                    'provider': search['provider'], 'status': search['status'],
                    'indexed_at': local.get('indexed_at'), 'indexed_pages': local.get('indexed_pages'),
+                   'passage_indexed_pages': local.get('passage_indexed_pages'), 'legacy_pages': local.get('legacy_pages', 0),
                    'cache_used': local.get('cache_used'), 'pending_urls': local.get('pending_urls', 0),
                    'query_diagnostics': local.get('query_diagnostics', []),
                    'site_coverage': local.get('site_coverage', []),

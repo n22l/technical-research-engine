@@ -41,5 +41,24 @@ class RecoveryTests(unittest.TestCase):
         for raw in [b'x'*2_000_001,b'<!DOCTYPE x><urlset/>']:
             with self.assertRaises(ValueError): discovery_links(gzip.compress(raw),url)
 
+    def test_fresh_snapshot_cannot_hide_unmigrated_pages(self):
+        import json,time
+        policy=SourcePolicy({'agency.example':{'allowed':True,'publisher':'Agency','type':'government'}})
+        with tempfile.TemporaryDirectory() as tmp:
+            p=LocalSearchProvider(Path(tmp),policy)
+            p.entries=[{'url':'https://agency.example/old','title':'SpaceX reuse both stages',
+                'text':'SpaceX reuse both stages','retrieved_at':'2026-01-01','epoch':time.time()}]
+            p.audit['indexed_at']='2026-01-01';p._save()
+            q=LocalSearchProvider(Path(tmp),policy)
+            self.assertFalse(q._load())
+            self.assertEqual(q.search('SpaceX reuse both stages'),[])
+            self.assertEqual(q.audit['legacy_pages'],1)
+            def fetch(url):
+                return (b'User-agent: *\nDisallow:', 'text/plain') if url.endswith('robots.txt') else (b'<p>SpaceX reuse both stages is a synthetic query.</p>','text/html')
+            with patch('local_search.Fetcher.fetch',side_effect=fetch),patch('local_search.time.sleep'):
+                q._crawl()
+            self.assertEqual(q.audit['legacy_pages'],0)
+            self.assertTrue(q.search('SpaceX reuse both stages')[0].local_match)
+
 
 if __name__=='__main__':unittest.main()

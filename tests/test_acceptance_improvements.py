@@ -41,6 +41,9 @@ class AcceptanceTests(unittest.TestCase):
             provider.entries = [{'url': 'https://agency.example/' + suffix, 'title': 'China rocket reflight',
                                  'text': 'China rocket reflight report.', 'retrieved_at': '2026-01-01'}
                                 for suffix in ['', 'reports/reflight-record']]
+            for i, e in enumerate(provider.entries):
+                e['source'] = {'source_id':str(i)}
+                e['passages'] = [{'passage_id':str(i)+':p1', 'passage':e['text'], 'source':{'id':str(i)}, 'location':{}}]
             self.assertTrue(provider.search('China rocket reflight')[0].url.endswith('reflight-record'))
 
     def test_compound_split_and_explicit_chinese_override(self):

@@ -82,7 +82,7 @@ def match_details(text, query):
             'expanded_terms': sorted(matched - {m.group().lower() for m in TOKEN.finditer(text)})}
 
 
-def rank_passages(passages, query, limit=5, per_document=2):
+def rank_passages(passages, query, limit=5, per_document=2, deduplicate=True):
     q = set(keyword_tokens(query))
     if not q or not passages: return []
     vectors = [keyword_tokens(p['passage']) for p in passages]
@@ -118,7 +118,7 @@ def rank_passages(passages, query, limit=5, per_document=2):
     for p in hits:
         doc = p['source']['id']
         normalized = ' '.join(p['passage'].lower().split())
-        if counts[doc] >= per_document or normalized in seen: continue
+        if counts[doc] >= per_document or (deduplicate and normalized in seen): continue
         counts[doc] += 1; seen.add(normalized); result.append(p)
         if len(result) >= limit: break
     return result
