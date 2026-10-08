@@ -73,8 +73,8 @@ remain subject to retry backoff. Completion still depends on publisher accessibi
 
 The recovery regressions reproduce sitemap failure starvation, gzip expansion limits,
 incomplete migration inside a fresh schema-4 snapshot, and article-vs-homepage
-selection before duplicate suppression. This does not yet repair missing official
-article entry points or incomplete entity matching; those remain separate work.
+selection before duplicate suppression. The follow-up below adds verified source
+entry points and explicit entity constraints; broader discovery remains bounded.
 
 ## Ranking and exact evidence
 
@@ -154,3 +154,58 @@ site crawl or a factual verdict:
 
 Publication passages, captures, inventories and research reports are excluded from
 the public change. The browser smoke uses entirely fictional evidence.
+
+## Retrieval recovery follow-up, 2026-10-08
+
+The default seeds now include two fetched/parsed NASA rocket references and an
+accessible CAS article about Kinetica-2. These are entry points on already-approved
+hosts, not new publisher approvals. Explicit seeds remain admissible when another
+publisher has filled the discovered-URL inventory, and outrank ordinary frontier
+pages after legacy migration priority. Blocked legacy pages back off for one hour,
+so each new question does not immediately repeat failed robots checks. They remain
+pending for later policy-compliant retries. Legacy refetches omit conditional
+validators so a 304 cannot indefinitely preserve a text-only record.
+
+Fetch/parse failures retain bounded reason codes. Publisher coverage distinguishes
+an HTTP failure, a network/fetch failure, and HTML with scripts but no extractable
+paragraphs. SpaceX vehicle URLs returned such shells in the live check; CNSA's
+connection failed. Neither is evidence that those publishers lack information.
+No JavaScript execution, access-control bypass, unapproved host or paid fallback
+was added. HTML parsing now honors explicitly declared UTF-8, GB2312/GBK/GB18030,
+Big5 and Windows-1252 encodings with strict decoding, retaining exact extracted
+paragraph locations rather than replacement characters.
+
+Company/vehicle aliases and numbered Crew/CRS/Artemis identities constrain retrieval.
+Mixed English/Chinese boundaries work without spaces. A title or section heading
+may supply identity context, but not capability words, and a conflicting body
+identity cannot be rescued by the title. This is lexical filtering, not entity
+resolution or entailment. Unknown names, implicit pronouns and complex comparisons
+remain limitations. Publisher-filtered diagnostics use the actual indexed passages,
+not unrelated publishers or legacy page text.
+
+`data/evaluation/source-cases-v1.json` freezes eight development questions: paired
+English/Chinese NASA and CAS queries plus wrong-company/missing-mission controls.
+Expected passages were inspected against source text and bound by paragraph hashes;
+the fixture has its own normalized-line-ending checksum. Human sign-off is still
+pending. A changed paragraph fails the frozen check instead of silently relabeling it.
+
+```powershell
+python -B src/evaluate_sources.py --data-dir C:\ExternalEvaluationFolder --refresh
+python -B src/evaluate_sources.py --data-dir C:\ExternalEvaluationFolder
+```
+
+Use a separate existing non-Git folder. The first command explicitly fetches a
+bounded, robots-checked set of known-source seeds. The second replays the private
+snapshot without network calls. Captures and full source text stay outside Git.
+Cold acquisition and offline replay passed 8/8 on this small development set; this
+is not a held-out accuracy estimate or evidence of general sitewide recall.
+The SpaceX “both stages” case expects related context, not a positive verdict;
+the China engine cases identify future plans, not demonstrated reflight.
+
+Cold and legacy-index regressions also exercise discovery through citation-validated
+human review in both languages, reject another company's page, and require that no
+unreviewed verdict is emitted. Real targeted private-index refreshes increased
+passage-indexed documents from 4 to 21, leaving 25 legacy pages. SpaceX and China
+engine queries returned candidates in English and Chinese; a nonexistent numbered
+mission returned none. Larger publisher coverage and unavailable sources remain
+incomplete; these results must not be described as full research readiness.

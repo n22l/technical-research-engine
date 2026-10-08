@@ -91,7 +91,10 @@ def rank_passages(passages, query, limit=5, per_document=2, deduplicate=True):
     hits = []
     for p, v in zip(passages, vectors):
         text = p['passage']
-        if not subject_matches(query, text): continue
+        loc = p.get('location', {})
+        loc = asdict(loc) if is_dataclass(loc) else loc
+        fields = p.get('source', {}).get('title', '') + ' ' + (loc.get('section_heading') or '')
+        if not subject_matches(query, text, fields): continue
         matched = q & v.keys()
         if not matched or (len(q) >= 3 and len(matched) < 2): continue
         length = sum(v.values())
@@ -104,9 +107,6 @@ def rank_passages(passages, query, limit=5, per_document=2, deduplicate=True):
                                      -(s['match']['minimum_term_window'] or 100000)), default=None)
         same = bool(best and best['match']['term_coverage'] == 1)
         level = 'ALL_TERMS_SAME_SENTENCE' if same else 'ALL_TERMS_SAME_PARAGRAPH' if details['term_coverage'] == 1 else 'PARTIAL_PARAGRAPH'
-        loc = p.get('location', {})
-        loc = asdict(loc) if is_dataclass(loc) else loc
-        fields = p.get('source', {}).get('title', '') + ' ' + (loc.get('section_heading') or '')
         field_boost = len(q & keyword_tokens(fields).keys())/len(q)
         score = bm25 * details['term_coverage']**2 * (1 + 2*same + len(details['matched_phrases'])
                 + (2/(details['minimum_term_window'] or 100000)) + .2*field_boost)

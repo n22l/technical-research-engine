@@ -18,7 +18,7 @@ from urllib.robotparser import RobotFileParser
 from research_search import external_directory, safe_file, keyword_scores
 from search_discovery import SearchResult, SearchError, normalize_url
 from verification_models import digest, now
-from web_sources import Fetcher, FetchError, parse_document
+from web_sources import Fetcher, FetchError, parse_document, decode_html
 from retrieval_constraints import coverage, page_weight
 
 
@@ -162,6 +162,8 @@ class LocalSearchProvider:
                           self.policy.qualify(item[0])['publisher'] != self.publisher_filter]
         queue, queued = deque(), set()
         truncated = False
+        seeds = {u for h, r in self.policy.rules.items() if r.get('allowed')
+                 for u in r.get('crawl_seeds', ['https://' + h + '/'])}
         def same_publisher(a, b):
             try:
                 rule = self.policy.qualify(a)
@@ -175,7 +177,7 @@ class LocalSearchProvider:
                 rule = self.policy.qualify(url)
                 if self.publisher_filter and self.publisher_filter not in (rule['publisher'], urlsplit(url).hostname):
                     return
-                if url not in self.inventory and url not in retained and len(self.inventory) >= self.max_urls_discovered:
+                if url not in self.inventory and url not in retained and url not in seeds and len(self.inventory) >= self.max_urls_discovered:
                     truncated = True
                     return
                 self.inventory.setdefault(url, {'kind': kind, 'status': 'PENDING'})
@@ -208,7 +210,7 @@ class LocalSearchProvider:
         for item in self.frontier:
             enqueue(*item)
         for url, state in list(self.inventory.items()):
-            if state['status'] == 'FETCH_FAILED':
+            if state['status'] in {'FETCH_FAILED', 'ROBOTS_BLOCKED'}:
                 enqueue(url, state.get('depth', 0), state['kind'])
         pending = {item[0] for item in self.frontier}
         queue = deque(sorted(queue, key=lambda item: item[0] not in pending))
@@ -228,6 +230,7 @@ class LocalSearchProvider:
             index = min(range(len(queue)), key=lambda i: (
                 (queue[i][2] != 'page') if prefer_pages else (queue[i][2] != 'map'),
                 not (queue[i][0] in retained and 'passages' not in retained[queue[i][0]]),
+                queue[i][0] not in seeds,
                 hosts[urlsplit(queue[i][0]).hostname] + maps[urlsplit(queue[i][0]).hostname],
                 indexed_hosts[urlsplit(queue[i][0]).hostname]))
             queue.rotate(-index)
@@ -282,6 +285,8 @@ class LocalSearchProvider:
             parser = robots[host]
             if parser is None or not parser.can_fetch('TechnicalResearchEngine', url):
                 self.inventory[url]['status'] = 'ROBOTS_BLOCKED'
+                self.inventory[url]['retry_after'] = time.time() + 3600
+                deferred.append((url, depth, kind))
                 self.audit['events'].append({'url': url, 'status': 'ROBOTS_BLOCKED_OR_UNAVAILABLE'})
                 continue
             delay = max(1, parser.crawl_delay('TechnicalResearchEngine') or 1)
@@ -290,13 +295,17 @@ class LocalSearchProvider:
                 delay = max(delay, rate.seconds / rate.requests)
             if delay > 10:
                 self.inventory[url]['status'] = 'ROBOTS_BLOCKED'
+                self.inventory[url]['retry_after'] = time.time() + 3600
+                deferred.append((url, depth, kind))
                 self.audit['events'].append({'url': url, 'status': 'CRAWL_DELAY_EXCEEDS_BUDGET'})
                 continue
+            stage = 'fetch'
             try:
                 self.inventory[url]['attempts'] = self.inventory[url].get('attempts', 0) + 1
                 self.inventory[url]['depth'] = depth
                 old = retained.get(url, {}) if kind == 'page' else {}
-                fetcher.validators = {k: old.get(v) for k, v in [('If-None-Match', 'etag'), ('If-Modified-Since', 'last_modified')]}
+                fetcher.validators = ({k: old.get(v) for k, v in [('If-None-Match', 'etag'), ('If-Modified-Since', 'last_modified')]}
+                                      if 'passages' in old else {})
                 body, media = fetcher.fetch(url)
                 self.inventory[url].pop('retry_after', None)
                 if body is None:
@@ -315,13 +324,14 @@ class LocalSearchProvider:
                     self.audit['events'].append({'url': url, 'status': 'DISCOVERY_FEED_READ'})
                     continue
                 with contextlib.redirect_stderr(io.StringIO()):
+                    stage = 'parse'
                     doc = parse_document(url, body, media, self.policy)
                 if len(doc.text) > 200000 or len(doc.passages) > 2000:
                     raise ValueError('Parsed document exceeds index bound')
                 index_text = doc.text
                 if media == 'text/html':
                     cleaner = IndexText()
-                    cleaner.feed(body.decode('utf-8', errors='replace'))
+                    cleaner.feed(decode_html(body))
                     index_text = ' '.join(cleaner.parts)
                 if url in retained or len(retained) < self.max_pages:
                     capture = 'crawl-capture-' + doc.source.content_hash + '.bin'
@@ -338,6 +348,7 @@ class LocalSearchProvider:
                                      'passages': [dict(p, location=asdict(p['location'])) for p in doc.passages],
                                      'epoch': time.time()}
                     self.inventory[url]['status'] = 'INDEXED'
+                    self.inventory[url].pop('failure_reason', None)
                 else:
                     deferred.append((url, depth, kind))
                     truncated = True
@@ -354,11 +365,15 @@ class LocalSearchProvider:
                                 enqueue(target, depth + 1)
                         except ValueError:
                             pass
-            except Exception:
+            except Exception as exc:
                 self.inventory[url]['status'] = 'FETCH_FAILED'
+                reason = ('HTTP_' + str(exc.status) if isinstance(exc, FetchError) else
+                          str(exc) if str(exc) in {'SCRIPT_ONLY_OR_EMPTY_HTML', 'NO_EXTRACTABLE_PARAGRAPHS'} else
+                          'PARSE_FAILED' if stage == 'parse' else 'NETWORK_OR_FETCH_FAILED')
+                self.inventory[url]['failure_reason'] = reason
                 self.inventory[url]['retry_after'] = time.time() + min(86400, 300 * 2 ** min(self.inventory[url].get('attempts', 1)-1, 8))
                 deferred.append((url, depth, kind))
-                self.audit['events'].append({'url': url, 'status': 'FETCH_OR_PARSE_FAILED'})
+                self.audit['events'].append({'url': url, 'status': 'FETCH_OR_PARSE_FAILED', 'reason': reason})
             finally:
                 time.sleep(delay)
         self.entries = list(retained.values())
@@ -381,7 +396,9 @@ class LocalSearchProvider:
             items = [v for u, v in self.inventory.items() if urlsplit(u).hostname in hosts]
             counts = Counter(v['status'] for v in items)
             pending = sum(urlsplit(u).hostname in hosts for u, _, _ in self.frontier)
-            limited = counts['DISCOVERY_LIMITED'] or counts['PENDING'] or pending or truncated
+            waiting_work = any(urlsplit(u).hostname in hosts and self.inventory.get(u, {}).get('status')
+                               not in {'FETCH_FAILED', 'ROBOTS_BLOCKED'} for u, _, _ in self.frontier)
+            limited = counts['DISCOVERY_LIMITED'] or counts['PENDING'] or waiting_work or truncated
             status = ('BUDGET_LIMITED' if limited else 'ROBOTS_LIMITED' if counts['ROBOTS_BLOCKED'] else
                       'FETCH_LIMITED' if counts['FETCH_FAILED'] else 'UNKNOWN' if not items else 'COMPLETE_WITHIN_DISCOVERED_SCOPE')
             rows.append(dict(publisher=publisher, approved_hosts=hosts, discovered_urls=len(items),
@@ -389,6 +406,7 @@ class LocalSearchProvider:
                 pages_attempted=sum(v.get('attempts',0) for v in items if v['kind']=='page'),
                 indexed_urls=counts['INDEXED'], pending_urls=pending, blocked_urls=counts['ROBOTS_BLOCKED'],
                 failed_urls=counts['FETCH_FAILED'], sitemap_urls=sum(v['kind']=='map' for v in items),
+                failure_reasons=dict(Counter(v.get('failure_reason', 'UNSPECIFIED') for v in items if v['status']=='FETCH_FAILED')),
                 status=status, updated_at=now()))
         self.audit['site_coverage'] = rows
 
@@ -415,7 +433,7 @@ class LocalSearchProvider:
             hit = by_source.get(e.get('source', {}).get('source_id'))
             score = hit['score'] if hit else 0
             if score > 0: ranked.append((score * page_weight(e['url']), e, hit))
-        diagnostic = coverage(query, [e['title'] + ' ' + e['text'] for e in self.entries])
+        diagnostic = coverage(query, [e['title'] + ' ' + p['passage'] for e in entries for p in e.get('passages', [])])
         if ranked:
             diagnostic['status'] = 'MATCHES_FOUND'
         diagnostic['matching_pages'] = len(ranked)
