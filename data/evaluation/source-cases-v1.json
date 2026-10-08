@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "scope": "Small development set of source passages inspected on 2026-10-08; retrieval expectations, not factual verdicts or a held-out benchmark. Human sign-off pending.",
+  "cases": [
+    {
+      "id": "falcon-en",
+      "query": "does spacex have reuse both stages?",
+      "url": "https://www.nasa.gov/launch-services-program-rockets/",
+      "anchor": "Falcon 9 is a reusable, two-stage rocket",
+      "note": "Related context only; this paragraph does not prove both stages are reused.",
+      "expected_passage_hash": "4bd689302985d69085107b4d184ab2683461614ea90ae220a0613c725bb6e510"
+    },
+    {
+      "id": "falcon-zh",
+      "query": "SpaceX猎鹰九号可复用火箭",
+      "url": "https://www.nasa.gov/launch-services-program-rockets/",
+      "anchor": "Falcon 9 is a reusable, two-stage rocket",
+      "expected_passage_hash": "4bd689302985d69085107b4d184ab2683461614ea90ae220a0613c725bb6e510"
+    },
+    {
+      "id": "heavy-en",
+      "query": "Falcon Heavy reusable first stage boosters",
+      "url": "https://www.nasa.gov/history/5-years-ago-first-flight-of-the-falcon-heavy-rocket/",
+      "anchor": "three reusable Falcon 9 first stage boosters",
+      "expected_passage_hash": "8afef4705c56f49ed940dcb717859458f85966f93009bf89211c4a079bba8b3c"
+    },
+    {
+      "id": "heavy-zh",
+      "query": "重型猎鹰复用火箭",
+      "url": "https://www.nasa.gov/history/5-years-ago-first-flight-of-the-falcon-heavy-rocket/",
+      "anchor": "three reusable Falcon 9 first stage boosters",
+      "expected_passage_hash": "8afef4705c56f49ed940dcb717859458f85966f93009bf89211c4a079bba8b3c"
+    },
+    {
+      "id": "china-en",
+      "query": "China reusable rocket engines",
+      "url": "https://english.cas.cn/newsroom/cas-in-media/202603/t20260331_1154303.shtml",
+      "anchor": "future versions of Kinetica-2",
+      "note": "Future configuration, not demonstrated reflight; attributed CGTN report.",
+      "expected_passage_hash": "1a93e690a372f38cf7fb71ab1f7b16e13da302df9791ddffd1015744aad0a794"
+    },
+    {
+      "id": "china-zh",
+      "query": "中国可复用火箭发动机",
+      "url": "https://english.cas.cn/newsroom/cas-in-media/202603/t20260331_1154303.shtml",
+      "anchor": "future versions of Kinetica-2",
+      "expected_passage_hash": "1a93e690a372f38cf7fb71ab1f7b16e13da302df9791ddffd1015744aad0a794"
+    },
+    {
+      "id": "missing-mission",
+      "query": "Crew-999 rocket launch",
+      "expect_empty": true
+    },
+    {
+      "id": "wrong-company",
+      "query": "Stoke Space reusable stages",
+      "expect_empty": true
+    }
+  ]
+}

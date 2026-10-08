@@ -129,6 +129,17 @@ def iso_date(value):
         return None
 
 
+def decode_html(body):
+    """Respect a bounded explicit HTML charset without lossy replacement text."""
+    declaration = re.search(br'<meta\b[^>]*charset\s*=\s*[\"\x27\s]*([a-zA-Z0-9_-]+)', body[:8192], re.I)
+    charset = declaration.group(1).decode('ascii').lower() if declaration else 'utf-8'
+    encodings = {'utf-8':'utf-8-sig', 'utf8':'utf-8-sig', 'gbk':'gb18030', 'gb2312':'gb18030',
+                 'gb18030':'gb18030', 'big5':'big5', 'windows-1252':'cp1252'}
+    if charset not in encodings:
+        raise ValueError('UNSUPPORTED_HTML_CHARSET')
+    return body.decode(encodings[charset], errors='strict')
+
+
 def parse_document(url, body, media_type, policy):
     rule = policy.qualify(url)
     if not rule['allowed']:
@@ -148,7 +159,7 @@ def parse_document(url, body, media_type, policy):
         title = str((reader.metadata or {}).get('/Title', ''))
     elif media_type in {'text/html', 'application/xhtml+xml'}:
         parser = PageParser()
-        parser.feed(body.decode('utf-8', errors='strict'))
+        parser.feed(decode_html(body))
         parser.flush()
         blocks, title, language = parser.main_blocks or parser.blocks, parser.title, parser.language
         published = iso_date(parser.meta.get('article:published_time') or parser.meta.get('date'))
@@ -162,7 +173,9 @@ def parse_document(url, body, media_type, policy):
     else:
         raise ValueError('Unsupported media type')
     if not blocks:
-        raise ValueError('No extractable paragraphs')
+        if media_type in {'text/html', 'application/xhtml+xml'} and b'<script' in body.lower():
+            raise ValueError('SCRIPT_ONLY_OR_EMPTY_HTML')
+        raise ValueError('NO_EXTRACTABLE_PARAGRAPHS')
     sid = digest(url + '\n' + digest(body))[:24]
     source = SourceRecord(sid, url, canonical, title, rule['publisher'], published, now(),
                           rule.get('tier'), rule['type'], language, urlsplit(url).hostname,
@@ -174,7 +187,7 @@ def parse_document(url, body, media_type, policy):
         text += paragraph + '\n\n'
         location = EvidenceLocation(sid, i, paragraph[:100], start, start + len(paragraph), page, heading)
         passages.append({'passage_id': f'{sid}:p{i}', 'passage': paragraph, 'location': location,
-                         'source': {'id': sid, 'source_url': url}})
+                         'source': {'id': sid, 'source_url': url, 'title': title}})
     doc = Document(source, text, passages)
     # Links are dependency hints, not evidence of independent confirmation.
     source.attributed_to = sorted(set(links))

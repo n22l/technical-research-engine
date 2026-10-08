@@ -9,6 +9,8 @@
       "official": true,
       "primary": true,
       "crawl_seeds": [
+        "https://www.nasa.gov/launch-services-program-rockets/",
+        "https://www.nasa.gov/history/5-years-ago-first-flight-of-the-falcon-heavy-rocket/",
         "https://www.nasa.gov/missions/"
       ]
     },
@@ -107,6 +109,7 @@
       "official": true,
       "primary": true,
       "crawl_seeds": [
+        "https://english.cas.cn/newsroom/cas-in-media/202603/t20260331_1154303.shtml",
         "https://english.cas.cn/"
       ]
     },
