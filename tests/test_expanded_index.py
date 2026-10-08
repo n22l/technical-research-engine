@@ -84,7 +84,7 @@ class ExpandedIndexTests(unittest.TestCase):
         provider.entries = [
             {'url':'https://agency.example/generic','title':'News','text':'booster ' * 100,'retrieved_at':'2026-01-01'},
             {'url':'https://agency.example/flight','title':'Falcon 9 reflight 2025','text':'Flight record.','retrieved_at':'2026-01-01'}]
-        self.assertEqual(provider.search('Falcon 9 reflight 2025')[0].url, 'https://agency.example/flight')
+        self.assertEqual(provider.search('Falcon 9 reflight 2025'), [])  # Legacy title-only hits are no longer evidence discovery.
         self.assertEqual(provider.search('the and of'), [])
 
     def test_bounds_and_cleaner(self):

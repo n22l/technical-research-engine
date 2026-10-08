@@ -15,6 +15,11 @@ except the existing 404/410 handling. Redirect/public-address/HTTPS protections 
 Robots-advertised and configured maps are prioritized over HTML page crawling.
 Pages are interleaved after batches of maps to avoid starving indexing during a
 short refresh; remaining sitemap work is retained rather than discarded.
+The recovery scheduler now attempts an available page after two map attempts,
+including failed maps. Failed fetches persist a bounded retry backoff (five minutes
+up to one day); refresh does not bypass that backoff. Gzip sitemap files are accepted
+only within both compressed and decompressed two-megabyte limits, with the same
+DTD/entity rejection as ordinary XML.
 Nested maps have separate depth (8), files-per-host-per-refresh (100), and discovered
 URL/frontier (20,000) limits. The old five-map ceiling is removed. A sitemap article
 starts at discovery depth zero regardless of URL path depth. RSS/Atom and HTML links
@@ -59,6 +64,17 @@ old snapshots. Schema/policy refresh writes a new snapshot. Old immutable resear
 records remain; changed parsing/ranking can require research and review again rather
 than applying old reviews to changed evidence. Document parsing for the index is
 bounded at 200,000 characters/2,000 paragraphs; oversized documents report failure.
+
+Recovery changes: legacy page-text records are excluded from discovery results until
+their actual paragraphs are indexed. A fresh snapshot timestamp no longer hides
+eligible unfinished migration. Legacy URLs reserve queue slots and receive page
+priority; the UI reports legacy and passage-indexed counts separately. Failed URLs
+remain subject to retry backoff. Completion still depends on publisher accessibility.
+
+The recovery regressions reproduce sitemap failure starvation, gzip expansion limits,
+incomplete migration inside a fresh schema-4 snapshot, and article-vs-homepage
+selection before duplicate suppression. This does not yet repair missing official
+article entry points or incomplete entity matching; those remain separate work.
 
 ## Ranking and exact evidence
 
