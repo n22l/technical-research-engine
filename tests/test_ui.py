@@ -322,6 +322,17 @@ class UITests(unittest.TestCase):
         self.assertEqual(response.status,403)
         conn.request('GET','/api/config',headers={'X-UI-Token':token});response=conn.getresponse();data=json.loads(response.read())
         self.assertTrue(data['configured'])
+        navigation={'Sec-Fetch-Site':'cross-site','Sec-Fetch-Mode':'navigate','Sec-Fetch-Dest':'document'}
+        conn.request('GET','/',headers=navigation);response=conn.getresponse();response.read()
+        self.assertEqual(response.status,200)
+        for path,mode,dest in [('/api/config','navigate','document'),('/','cors','empty'),('/','navigate','iframe'),('/app.js','no-cors','script')]:
+            conn.request('GET',path,headers={**navigation,'Sec-Fetch-Mode':mode,'Sec-Fetch-Dest':dest,'X-UI-Token':token})
+            response=conn.getresponse();response.read()
+            self.assertEqual(response.status,403)
+        conn.request('GET','/api/config',headers={'X-UI-Token':'old-session'})
+        response=conn.getresponse();error=json.loads(response.read())
+        self.assertEqual(response.status,403)
+        self.assertIn('refresh',error['error'])
 
 
 if __name__ == '__main__': unittest.main()

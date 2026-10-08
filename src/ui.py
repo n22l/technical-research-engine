@@ -42,7 +42,13 @@ def create_server(port=8000, application=None):
             if self.headers.get('Host') != host:
                 return False
             if self.headers.get('Sec-Fetch-Site') == 'cross-site':
-                return False
+                # A link from another site may open the app, but may not read
+                # APIs, embed the page, load assets, or submit mutations.
+                entry_navigation = (self.command == 'GET' and urlsplit(self.path).path == '/'
+                                    and self.headers.get('Sec-Fetch-Mode') == 'navigate'
+                                    and self.headers.get('Sec-Fetch-Dest') == 'document')
+                if not entry_navigation:
+                    return False
             if self.command == 'POST' and self.headers.get('Origin') != 'http://' + host:
                 return False
             return not api or secrets.compare_digest(self.headers.get('X-UI-Token', ''), token)
@@ -50,7 +56,7 @@ def create_server(port=8000, application=None):
         def do_GET(self):
             path = urlsplit(self.path).path
             if not self.allowed(path.startswith('/api/')):
-                return self.send({'error': 'Local request rejected.'}, 403)
+                return self.send({'error': 'Local request rejected. Open http://127.0.0.1:' + str(self.server.server_port) + '/ directly and refresh the page. An older tab may have an expired session.'}, 403)
             if path == '/health':
                 return self.send({'application': 'technical-research-engine', 'configured': app is not None,
                                   'storage_id': digest(str(app.base)) if app else None})
@@ -84,7 +90,7 @@ def create_server(port=8000, application=None):
 
         def do_POST(self):
             if not self.allowed(True):
-                return self.send({'error': 'Local request rejected.'}, 403)
+                return self.send({'error': 'Local request rejected. Refresh the page after an engine restart, then try again.'}, 403)
             try:
                 if self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
                     raise UIError('JSON request required.')
