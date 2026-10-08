@@ -209,3 +209,11 @@ passage-indexed documents from 4 to 21, leaving 25 legacy pages. SpaceX and Chin
 engine queries returned candidates in English and Chinese; a nonexistent numbered
 mission returned none. Larger publisher coverage and unavailable sources remain
 incomplete; these results must not be described as full research readiness.
+
+Final validation: 148 tests ran, 146 passed and two optional tests skipped;
+JavaScript syntax and whitespace checks passed. After restarting the local app,
+the SpaceX example completed through its HTTP research API with three parsed
+documents, four reviewable passages, no capture integrity error, and no unreviewed
+verdict. That additional crawl reached 31 passage-indexed documents, with 15 legacy
+pages remaining. Refresh the browser and open the new history entry; old immutable
+research records are not silently rewritten with newly retrieved evidence.
