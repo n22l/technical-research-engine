@@ -2,6 +2,7 @@
 import contextlib
 from collections import Counter, deque
 import io
+import gzip
 from html.parser import HTMLParser
 import json
 import os
@@ -47,6 +48,11 @@ class IndexText(HTMLParser):
 
 def discovery_links(body, base, max_urls=50000):
     """Bounded sitemap/RSS/Atom parser; no DTDs, entities or external resolution."""
+    if len(body) > 2_000_000:
+        raise ValueError('Oversized discovery file')
+    if body.startswith(b'\x1f\x8b'):
+        with gzip.GzipFile(fileobj=io.BytesIO(body)) as stream:
+            body = stream.read(2_000_001)
     if len(body) > 2_000_000 or b'<!DOCTYPE' in body.upper() or b'<!ENTITY' in body.upper():
         raise ValueError('Unsafe discovery XML')
     root = ET.fromstring(body.decode('utf-8-sig'))
@@ -195,6 +201,9 @@ class LocalSearchProvider:
                 enqueue(seed)
         for item in self.frontier:
             enqueue(*item)
+        for url, state in list(self.inventory.items()):
+            if state['status'] == 'FETCH_FAILED':
+                enqueue(url, state.get('depth', 0), state['kind'])
         pending = {item[0] for item in self.frontier}
         queue = deque(sorted(queue, key=lambda item: item[0] not in pending))
         for e in retained.values():
@@ -209,17 +218,18 @@ class LocalSearchProvider:
         while queue and attempts < self.max_pages and time.monotonic() - started < self.max_seconds:
             # Share the attempt budget across hosts; underrepresented hosts win ties.
             # A sitemap may add thousands of links without monopolizing the crawl.
+            prefer_pages = sum(maps.values()) >= 2 * (attempts + 1)
             index = min(range(len(queue)), key=lambda i: (
-                hosts[urlsplit(queue[i][0]).hostname],
-                # Interleave a page after eight maps so discovery cannot consume
-                # every second of a short refresh; this is not a sitemap file cap.
-                queue[i][2] != 'map' or maps[urlsplit(queue[i][0]).hostname] >=
-                    8 * (hosts[urlsplit(queue[i][0]).hostname] + 1),
+                (queue[i][2] != 'page') if prefer_pages else (queue[i][2] != 'map'),
+                hosts[urlsplit(queue[i][0]).hostname] + maps[urlsplit(queue[i][0]).hostname],
                 indexed_hosts[urlsplit(queue[i][0]).hostname]))
             queue.rotate(-index)
             url, depth, kind = queue.popleft()
             queue.rotate(index)
             host = urlsplit(url).hostname
+            if self.inventory[url].get('retry_after', 0) > time.time():
+                deferred.append((url, depth, kind))
+                continue
             if hosts[host] >= self.per_host:
                 deferred.append((url, depth, kind))
                 continue
@@ -231,6 +241,8 @@ class LocalSearchProvider:
             if kind == 'page':
                 attempts += 1
                 hosts[host] += 1
+            else:
+                maps[host] += 1  # Failed/blocked maps consume the discovery budget too.
             if host not in robots:
                 try:
                     fetcher.validators = {}
@@ -275,16 +287,17 @@ class LocalSearchProvider:
                 continue
             try:
                 self.inventory[url]['attempts'] = self.inventory[url].get('attempts', 0) + 1
+                self.inventory[url]['depth'] = depth
                 old = retained.get(url, {}) if kind == 'page' else {}
                 fetcher.validators = {k: old.get(v) for k, v in [('If-None-Match', 'etag'), ('If-Modified-Since', 'last_modified')]}
                 body, media = fetcher.fetch(url)
+                self.inventory[url].pop('retry_after', None)
                 if body is None:
                     if not old: raise ValueError('Unexpected not-modified response')
                     old['epoch'], old['retrieved_at'] = time.time(), now()
                     self.inventory[url]['status'] = 'INDEXED'
                     continue
                 if kind == 'map':
-                    maps[host] += 1
                     links = discovery_links(body, url, self.max_urls_discovered + 1)
                     if len(links) >= self.max_urls_discovered + 1: truncated = True
                     for link, child_kind in links:
@@ -336,12 +349,15 @@ class LocalSearchProvider:
                             pass
             except Exception:
                 self.inventory[url]['status'] = 'FETCH_FAILED'
+                self.inventory[url]['retry_after'] = time.time() + min(86400, 300 * 2 ** min(self.inventory[url].get('attempts', 1)-1, 8))
+                deferred.append((url, depth, kind))
                 self.audit['events'].append({'url': url, 'status': 'FETCH_OR_PARSE_FAILED'})
             finally:
                 time.sleep(delay)
         self.entries = list(retained.values())
         self.frontier = (other_frontier + list(queue) + deferred)[:self.max_urls_discovered]
         self.audit.update(indexed_at=now(), indexed_pages=len(self.entries), page_attempts=attempts,
+                          sitemap_attempts=sum(maps.values()),
                           pending_urls=len(self.frontier), cache_used=bool(retained) and self.audit['cache_used'],
                           stale_pages=sum(time.time() - e['epoch'] >= 86400 for e in self.entries),
                           budget_exhausted=bool(queue or deferred or truncated), hosts=sorted({urlsplit(e['url']).hostname for e in self.entries}))
