@@ -1,0 +1,1435 @@
+{
+  "schema_version": 1,
+  "fixture_version": "answer-bearing-v1",
+  "provenance": "Entirely authored synthetic texts; fictional events and programs, not real-world facts. Labels authored before baseline scoring; no independent human adjudication.",
+  "passages": [
+    {
+      "passage_id": "q01:a",
+      "passage": "Aster One booster B7 completed a second flight, establishing reflight.",
+      "source": {
+        "id": "q01-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q01:d",
+      "passage": "Aster Two completed a booster reflight; Aster One supplied its tracking equipment.",
+      "source": {
+        "id": "q01-other",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q01:c",
+      "passage": "Aster One booster reflight records identify B7 as the test article.",
+      "source": {
+        "id": "q01-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q02:a",
+      "passage": "The Aster upper stage is expendable; only its lower booster is reusable.",
+      "source": {
+        "id": "q02-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q02:d",
+      "passage": "Aster reusable first stage: the booster was recovered successfully.",
+      "source": {
+        "id": "q02-other",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q02:c",
+      "passage": "Aster stage configuration includes a lower booster and an upper stage.",
+      "source": {
+        "id": "q02-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q03:a",
+      "passage": "The Chinese Cedar booster completed reflight in its second launch.",
+      "source": {
+        "id": "q03-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q03:d",
+      "passage": "The US Cedar booster completed reflight in its second launch.",
+      "source": {
+        "id": "q03-other",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q03:c",
+      "passage": "The Chinese Cedar booster is a separate program from the US vehicle.",
+      "source": {
+        "id": "q03-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q04:a",
+      "passage": "Iris recovered its booster in 2020 after the coastal trial.",
+      "source": {
+        "id": "q04-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q04:d",
+      "passage": "Iris recover booster: the 2020 summary describes a recovery performed in 2019.",
+      "source": {
+        "id": "q04-other",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q04:c",
+      "passage": "Iris booster records distinguish event dates from publication dates.",
+      "source": {
+        "id": "q04-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q05:a",
+      "passage": "The Marigold booster completed its second flight; the same hardware was reflown.",
+      "source": {
+        "id": "q05-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q05:d",
+      "passage": "The Marigold booster will be reflown next year under the announced plan.",
+      "source": {
+        "id": "q05-other",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q05:c",
+      "passage": "The Marigold booster serial number connects its first and subsequent flights.",
+      "source": {
+        "id": "q05-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q06:a",
+      "passage": "Juniper demonstrated booster reflight by launching the recovered unit again.",
+      "source": {
+        "id": "q06-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q06:d",
+      "passage": "Juniper demonstrated booster recovery; reflight remains untested.",
+      "source": {
+        "id": "q06-other",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q06:c",
+      "passage": "Juniper booster reflight requires the same serial-numbered unit.",
+      "source": {
+        "id": "q06-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q07:a",
+      "passage": "Linden logs record routine booster reuse across twenty scheduled missions.",
+      "source": {
+        "id": "q07-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q07:d",
+      "passage": "Linden achieved one booster reuse trial; routine service is a future objective.",
+      "source": {
+        "id": "q07-other",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q07:c",
+      "passage": "Linden routine booster reuse requires repeated flights in scheduled service.",
+      "source": {
+        "id": "q07-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q08:a",
+      "passage": "Rowan completed booster reflight when unit R4 launched for the second time.",
+      "source": {
+        "id": "q08-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q08:d",
+      "passage": "Rowan booster reflight offers lower costs and faster turnaround in principle.",
+      "source": {
+        "id": "q08-other",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q08:c",
+      "passage": "Rowan booster R4 is tracked by serial number between missions.",
+      "source": {
+        "id": "q08-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q09:a",
+      "passage": "The Atlas vehicle completed an engine test at the remote stand.",
+      "source": {
+        "id": "q09-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q09:d",
+      "passage": "Atlas the laboratory completed an engine test for a different vehicle.",
+      "source": {
+        "id": "q09-other",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q09:c",
+      "passage": "Atlas is the name of both a vehicle and an unrelated laboratory.",
+      "source": {
+        "id": "q09-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q10:a",
+      "passage": "Sorrel recovers the lower stage, but expends the upper stage. Recovery applies to one stage only.",
+      "source": {
+        "id": "q10-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q10:d",
+      "passage": "Sorrel supports both crew and cargo; its stages carry equipment for these missions.",
+      "source": {
+        "id": "q10-other",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q10:c",
+      "passage": "Sorrel has two propulsion stages with different disposal procedures.",
+      "source": {
+        "id": "q10-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q11:a",
+      "passage": "Aster specifications describe the vehicle architecture without reporting stage reuse.",
+      "source": {
+        "id": "q11-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q11:d",
+      "passage": "Sorrel specifications describe a separate vehicle architecture without reporting stage reuse.",
+      "source": {
+        "id": "q11-other",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q11:c",
+      "passage": "Aster and Sorrel are different vehicles with separate stage designs.",
+      "source": {
+        "id": "q11-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q12:a",
+      "passage": "Willow has demonstrated engine relight in a controlled trial.",
+      "source": {
+        "id": "q12-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q12:d",
+      "passage": "Willow has demonstrated engine lighting in an exhibition display.",
+      "source": {
+        "id": "q12-other",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q12:c",
+      "passage": "Willow engine ignition records describe the trial procedure.",
+      "source": {
+        "id": "q12-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q13:a",
+      "passage": "青松一号一级同一枚箭体完成第二次飞行，验证了复飞。",
+      "source": {
+        "id": "q13-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q13:d",
+      "passage": "青松二号一级完成复飞，青松一号团队提供测量支持。",
+      "source": {
+        "id": "q13-other",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q13:c",
+      "passage": "青松一号一级复飞档案使用箭体编号确认身份。",
+      "source": {
+        "id": "q13-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q14:a",
+      "passage": "白榆的上面级为一次性使用，只有一级可重复使用。",
+      "source": {
+        "id": "q14-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q14:d",
+      "passage": "白榆的一级可重复使用，上面级团队参与了一级回收试验。",
+      "source": {
+        "id": "q14-other",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q14:c",
+      "passage": "白榆上面级与一级具有不同的任务功能。",
+      "source": {
+        "id": "q14-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q15:a",
+      "passage": "中国的银杏一级完成第二次飞行，确认同一枚箭体复飞。",
+      "source": {
+        "id": "q15-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q15:d",
+      "passage": "美国的银杏一级完成复飞，中国团队讨论了该结果。",
+      "source": {
+        "id": "q15-other",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q15:c",
+      "passage": "中国的银杏一级项目与美国同名项目无关。",
+      "source": {
+        "id": "q15-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q16:a",
+      "passage": "赤枫在2021年完成发动机验证，试验日期记录在当年日志中。",
+      "source": {
+        "id": "q16-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q16:d",
+      "passage": "赤枫2021年报告介绍了2020年完成的发动机验证。",
+      "source": {
+        "id": "q16-other",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q16:c",
+      "passage": "赤枫发动机验证日志分别记录发布日期和试验日期。",
+      "source": {
+        "id": "q16-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q17:a",
+      "passage": "紫藤一级同一枚箭体已经完成第二次飞行，复飞试验成功。",
+      "source": {
+        "id": "q17-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q17:d",
+      "passage": "紫藤一级计划明年完成复飞，目前尚未再次发射。",
+      "source": {
+        "id": "q17-other",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q17:c",
+      "passage": "紫藤一级复飞需要检查同一枚箭体的飞行记录。",
+      "source": {
+        "id": "q17-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q18:a",
+      "passage": "红杉一级已验证复飞：回收后的同一枚箭体再次发射。",
+      "source": {
+        "id": "q18-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q18:d",
+      "passage": "红杉一级已验证回收，复飞试验尚未开展。",
+      "source": {
+        "id": "q18-other",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q18:c",
+      "passage": "红杉一级复飞记录需要对应回收箭体的编号。",
+      "source": {
+        "id": "q18-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q19:a",
+      "passage": "海棠重复使用运载火箭在二十次定期任务中复飞，实现常态化运行。",
+      "source": {
+        "id": "q19-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q19:d",
+      "passage": "海棠重复使用运载火箭完成一次复飞试验，常态化运行仍是目标。",
+      "source": {
+        "id": "q19-other",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q19:c",
+      "passage": "海棠重复使用运载火箭的常态化复飞要求持续执行任务。",
+      "source": {
+        "id": "q19-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q20:a",
+      "passage": "木槿一级完成复飞，同一枚箭体第二次执行飞行任务。",
+      "source": {
+        "id": "q20-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q20:d",
+      "passage": "木槿一级复飞可以减少成本，这是重复使用技术的一般优势。",
+      "source": {
+        "id": "q20-other",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q20:c",
+      "passage": "木槿一级的编号用来区分不同箭体。",
+      "source": {
+        "id": "q20-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q21:a",
+      "passage": "飞燕运载器完成发动机试验，试验件装在该运载器上。",
+      "source": {
+        "id": "q21-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q21:d",
+      "passage": "飞燕实验室完成另一种运载器的发动机试验。",
+      "source": {
+        "id": "q21-other",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q21:c",
+      "passage": "飞燕同时是运载器名称和无关实验室名称。",
+      "source": {
+        "id": "q21-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q22:a",
+      "passage": "雪松只回收一级，上面级不回收，因此不是两级回收。",
+      "source": {
+        "id": "q22-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q22:d",
+      "passage": "雪松两级运载器支持载人和货运两种任务，回收研究仍在进行。",
+      "source": {
+        "id": "q22-other",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q22:c",
+      "passage": "雪松运载器包括一级和上面级。",
+      "source": {
+        "id": "q22-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q23:a",
+      "passage": "青松一号档案包含一级设计资料，本段未报告飞行结果。",
+      "source": {
+        "id": "q23-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q23:d",
+      "passage": "紫藤档案包含一级设计资料，本段未报告飞行结果。",
+      "source": {
+        "id": "q23-other",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q23:c",
+      "passage": "青松一号和紫藤是不同项目。",
+      "source": {
+        "id": "q23-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q24:a",
+      "passage": "晨露发动机二次启动试验成功，验证了重复点火能力。",
+      "source": {
+        "id": "q24-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q24:d",
+      "passage": "晨露发动机重复点火验证计划已公布，试验尚未开始。",
+      "source": {
+        "id": "q24-other",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q24:c",
+      "passage": "晨露发动机的重复点火也称为二次启动。",
+      "source": {
+        "id": "q24-record",
+        "title": "合成技术记录"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q25:a",
+      "passage": "Violet upper-stage reuse has not been demonstrated; the upper hardware is discarded.",
+      "source": {
+        "id": "q25-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q25:d",
+      "passage": "Violet demonstrated booster reuse; the upper-stage team observed the flight.",
+      "source": {
+        "id": "q25-other",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q25:c",
+      "passage": "Violet reuse assessments track booster and upper-stage hardware separately.",
+      "source": {
+        "id": "q25-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    },
+    {
+      "passage_id": "q26:a",
+      "passage": "Hazel completed a second engine firing on the same engine at the test stand.",
+      "source": {
+        "id": "q26-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q26:d",
+      "passage": "Hazel plans a second engine firing next year; the schedule is approved.",
+      "source": {
+        "id": "q26-other",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 1
+      }
+    },
+    {
+      "passage_id": "q26:c",
+      "passage": "Hazel engine firing records use serial numbers to connect test events.",
+      "source": {
+        "id": "q26-record",
+        "title": "Synthetic technical record"
+      },
+      "location": {
+        "paragraph_index": 2
+      }
+    }
+  ],
+  "cases": [
+    {
+      "id": "q01",
+      "language": "en",
+      "question": "Did Aster One complete a booster reflight?",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "Aster One",
+        "component": "booster",
+        "milestone": "reflight"
+      },
+      "expected_passage_ids": [
+        "q01:a"
+      ],
+      "acceptable_passage_ids": [
+        "q01:c"
+      ],
+      "distractor_passage_ids": [
+        "q01:d"
+      ],
+      "failure_category": "wrong_vehicle",
+      "rationale": "The other vehicle event cannot establish the target vehicle milestone."
+    },
+    {
+      "id": "q02",
+      "language": "en",
+      "question": "Is the Aster upper stage reusable?",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "Aster",
+        "component": "upper stage",
+        "milestone": "reuse capability"
+      },
+      "expected_passage_ids": [
+        "q02:a"
+      ],
+      "acceptable_passage_ids": [
+        "q02:c"
+      ],
+      "distractor_passage_ids": [
+        "q02:d"
+      ],
+      "failure_category": "wrong_component",
+      "rationale": "First-stage recovery does not answer upper-stage reuse."
+    },
+    {
+      "id": "q03",
+      "language": "en",
+      "question": "Has the Chinese Cedar booster completed reflight?",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "Chinese Cedar",
+        "component": "booster",
+        "milestone": "reflight"
+      },
+      "expected_passage_ids": [
+        "q03:a"
+      ],
+      "acceptable_passage_ids": [
+        "q03:c"
+      ],
+      "distractor_passage_ids": [
+        "q03:d"
+      ],
+      "failure_category": "wrong_country",
+      "rationale": "An identically named US program is not the Chinese program."
+    },
+    {
+      "id": "q04",
+      "language": "en",
+      "question": "Did Iris recover its booster in 2020?",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "Iris",
+        "component": "booster",
+        "milestone": "2020 recovery"
+      },
+      "expected_passage_ids": [
+        "q04:a"
+      ],
+      "acceptable_passage_ids": [
+        "q04:c"
+      ],
+      "distractor_passage_ids": [
+        "q04:d"
+      ],
+      "failure_category": "wrong_time_period",
+      "rationale": "Publication date does not establish the event date."
+    },
+    {
+      "id": "q05",
+      "language": "en",
+      "question": "Has the Marigold booster been reflown?",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "Marigold",
+        "component": "booster",
+        "milestone": "demonstrated reflight"
+      },
+      "expected_passage_ids": [
+        "q05:a"
+      ],
+      "acceptable_passage_ids": [
+        "q05:c"
+      ],
+      "distractor_passage_ids": [
+        "q05:d"
+      ],
+      "failure_category": "planned_vs_demonstrated",
+      "rationale": "A future plan does not establish completed reflight."
+    },
+    {
+      "id": "q06",
+      "language": "en",
+      "question": "Has Juniper demonstrated booster reflight?",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "Juniper",
+        "component": "booster",
+        "milestone": "reflight"
+      },
+      "expected_passage_ids": [
+        "q06:a"
+      ],
+      "acceptable_passage_ids": [
+        "q06:c"
+      ],
+      "distractor_passage_ids": [
+        "q06:d"
+      ],
+      "failure_category": "recovery_vs_reflight",
+      "rationale": "Recovery alone is not another flight."
+    },
+    {
+      "id": "q07",
+      "language": "en",
+      "question": "Has Linden achieved routine booster reuse?",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "Linden",
+        "component": "booster",
+        "milestone": "routine reuse"
+      },
+      "expected_passage_ids": [
+        "q07:a"
+      ],
+      "acceptable_passage_ids": [
+        "q07:c"
+      ],
+      "distractor_passage_ids": [
+        "q07:d"
+      ],
+      "failure_category": "reflight_vs_routine_reuse",
+      "rationale": "One demonstration is not routine operation."
+    },
+    {
+      "id": "q08",
+      "language": "en",
+      "question": "Has Rowan completed booster reflight?",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "Rowan",
+        "component": "booster",
+        "milestone": "reflight"
+      },
+      "expected_passage_ids": [
+        "q08:a"
+      ],
+      "acceptable_passage_ids": [
+        "q08:c"
+      ],
+      "distractor_passage_ids": [
+        "q08:d"
+      ],
+      "failure_category": "background_not_answer",
+      "rationale": "General benefits do not demonstrate a particular event."
+    },
+    {
+      "id": "q09",
+      "language": "en",
+      "question": "Did Atlas the vehicle complete an engine test?",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "Atlas vehicle",
+        "component": "engine",
+        "milestone": "test"
+      },
+      "expected_passage_ids": [
+        "q09:a"
+      ],
+      "acceptable_passage_ids": [
+        "q09:c"
+      ],
+      "distractor_passage_ids": [
+        "q09:d"
+      ],
+      "failure_category": "entity_collision",
+      "rationale": "The laboratory name collides with the vehicle name."
+    },
+    {
+      "id": "q10",
+      "language": "en",
+      "question": "Does Sorrel recover both stages?",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "Sorrel",
+        "component": "both stages",
+        "milestone": "recovery scope"
+      },
+      "expected_passage_ids": [
+        "q10:a"
+      ],
+      "acceptable_passage_ids": [
+        "q10:c"
+      ],
+      "distractor_passage_ids": [
+        "q10:d"
+      ],
+      "failure_category": "partial_keyword_overlap",
+      "rationale": "Both crew and cargo does not mean both stages."
+    },
+    {
+      "id": "q11",
+      "language": "en",
+      "question": "Does it reuse both stages?",
+      "status": "AMBIGUOUS",
+      "expected_answer_attributes": {
+        "entity": "unspecified",
+        "component": "both stages",
+        "milestone": "unspecified"
+      },
+      "expected_passage_ids": [],
+      "acceptable_passage_ids": [
+        "q11:a",
+        "q11:d",
+        "q11:c"
+      ],
+      "distractor_passage_ids": [],
+      "failure_category": "ambiguous_question",
+      "rationale": "The pronoun has no unique vehicle referent."
+    },
+    {
+      "id": "q12",
+      "language": "en",
+      "question": "Has Willow demonstrated engine relight?",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "Willow",
+        "component": "engine",
+        "milestone": "relight"
+      },
+      "expected_passage_ids": [
+        "q12:a"
+      ],
+      "acceptable_passage_ids": [
+        "q12:c"
+      ],
+      "distractor_passage_ids": [
+        "q12:d"
+      ],
+      "failure_category": "translation_or_language_variant",
+      "rationale": "Relight and exhibition lighting describe different relationships."
+    },
+    {
+      "id": "q13",
+      "language": "zh",
+      "question": "青松一号一级是否完成复飞？",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "青松一号",
+        "component": "一级",
+        "milestone": "复飞"
+      },
+      "expected_passage_ids": [
+        "q13:a"
+      ],
+      "acceptable_passage_ids": [
+        "q13:c"
+      ],
+      "distractor_passage_ids": [
+        "q13:d"
+      ],
+      "failure_category": "wrong_vehicle",
+      "rationale": "青松二号的事件不能证明青松一号复飞。"
+    },
+    {
+      "id": "q14",
+      "language": "zh",
+      "question": "白榆的上面级是否可重复使用？",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "白榆",
+        "component": "上面级",
+        "milestone": "可重复使用"
+      },
+      "expected_passage_ids": [
+        "q14:a"
+      ],
+      "acceptable_passage_ids": [
+        "q14:c"
+      ],
+      "distractor_passage_ids": [
+        "q14:d"
+      ],
+      "failure_category": "wrong_component",
+      "rationale": "一级回收不能证明上面级重复使用。"
+    },
+    {
+      "id": "q15",
+      "language": "zh",
+      "question": "中国的银杏一级完成复飞了吗？",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "中国银杏",
+        "component": "一级",
+        "milestone": "复飞"
+      },
+      "expected_passage_ids": [
+        "q15:a"
+      ],
+      "acceptable_passage_ids": [
+        "q15:c"
+      ],
+      "distractor_passage_ids": [
+        "q15:d"
+      ],
+      "failure_category": "wrong_country",
+      "rationale": "美国项目的结果不能证明中国项目的里程碑。"
+    },
+    {
+      "id": "q16",
+      "language": "zh",
+      "question": "赤枫在2021年完成发动机验证了吗？",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "赤枫",
+        "component": "发动机",
+        "milestone": "2021验证"
+      },
+      "expected_passage_ids": [
+        "q16:a"
+      ],
+      "acceptable_passage_ids": [
+        "q16:c"
+      ],
+      "distractor_passage_ids": [
+        "q16:d"
+      ],
+      "failure_category": "wrong_time_period",
+      "rationale": "报告日期不是事件日期。"
+    },
+    {
+      "id": "q17",
+      "language": "zh",
+      "question": "紫藤一级已经完成复飞了吗？",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "紫藤",
+        "component": "一级",
+        "milestone": "完成复飞"
+      },
+      "expected_passage_ids": [
+        "q17:a"
+      ],
+      "acceptable_passage_ids": [
+        "q17:c"
+      ],
+      "distractor_passage_ids": [
+        "q17:d"
+      ],
+      "failure_category": "planned_vs_demonstrated",
+      "rationale": "计划明年复飞不是已经完成。"
+    },
+    {
+      "id": "q18",
+      "language": "zh",
+      "question": "红杉一级是否验证了复飞？",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "红杉",
+        "component": "一级",
+        "milestone": "复飞验证"
+      },
+      "expected_passage_ids": [
+        "q18:a"
+      ],
+      "acceptable_passage_ids": [
+        "q18:c"
+      ],
+      "distractor_passage_ids": [
+        "q18:d"
+      ],
+      "failure_category": "recovery_vs_reflight",
+      "rationale": "回收验证不能替代复飞验证。"
+    },
+    {
+      "id": "q19",
+      "language": "zh",
+      "question": "海棠重复使用运载火箭是否实现常态化复飞？",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "海棠",
+        "component": "运载火箭",
+        "milestone": "常态化复飞"
+      },
+      "expected_passage_ids": [
+        "q19:a"
+      ],
+      "acceptable_passage_ids": [
+        "q19:c"
+      ],
+      "distractor_passage_ids": [
+        "q19:d"
+      ],
+      "failure_category": "reflight_vs_routine_reuse",
+      "rationale": "一次试验不足以证明常态化运行。"
+    },
+    {
+      "id": "q20",
+      "language": "zh",
+      "question": "木槿一级完成复飞了吗？",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "木槿",
+        "component": "一级",
+        "milestone": "复飞"
+      },
+      "expected_passage_ids": [
+        "q20:a"
+      ],
+      "acceptable_passage_ids": [
+        "q20:c"
+      ],
+      "distractor_passage_ids": [
+        "q20:d"
+      ],
+      "failure_category": "background_not_answer",
+      "rationale": "一般优势不说明是否完成具体事件。"
+    },
+    {
+      "id": "q21",
+      "language": "zh",
+      "question": "飞燕运载器完成发动机试验了吗？",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "飞燕运载器",
+        "component": "发动机",
+        "milestone": "试验"
+      },
+      "expected_passage_ids": [
+        "q21:a"
+      ],
+      "acceptable_passage_ids": [
+        "q21:c"
+      ],
+      "distractor_passage_ids": [
+        "q21:d"
+      ],
+      "failure_category": "entity_collision",
+      "rationale": "同名实验室与目标运载器不是同一实体。"
+    },
+    {
+      "id": "q22",
+      "language": "zh",
+      "question": "雪松是否回收两级？",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "雪松",
+        "component": "两级",
+        "milestone": "回收范围"
+      },
+      "expected_passage_ids": [
+        "q22:a"
+      ],
+      "acceptable_passage_ids": [
+        "q22:c"
+      ],
+      "distractor_passage_ids": [
+        "q22:d"
+      ],
+      "failure_category": "partial_keyword_overlap",
+      "rationale": "两种任务不能证明两级回收。"
+    },
+    {
+      "id": "q23",
+      "language": "zh",
+      "question": "它的一级复飞成功了吗？",
+      "status": "AMBIGUOUS",
+      "expected_answer_attributes": {
+        "entity": "未指定",
+        "component": "一级",
+        "milestone": "复飞"
+      },
+      "expected_passage_ids": [],
+      "acceptable_passage_ids": [
+        "q23:a",
+        "q23:d",
+        "q23:c"
+      ],
+      "distractor_passage_ids": [],
+      "failure_category": "ambiguous_question",
+      "rationale": "它没有唯一明确的项目指代。"
+    },
+    {
+      "id": "q24",
+      "language": "zh",
+      "question": "晨露发动机重复点火验证成功了吗？",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "晨露",
+        "component": "发动机",
+        "milestone": "重复点火验证"
+      },
+      "expected_passage_ids": [
+        "q24:a"
+      ],
+      "acceptable_passage_ids": [
+        "q24:c"
+      ],
+      "distractor_passage_ids": [
+        "q24:d"
+      ],
+      "failure_category": "translation_or_language_variant",
+      "rationale": "术语变体描述已完成事件，计划不等价于成功验证。"
+    },
+    {
+      "id": "q25",
+      "language": "en",
+      "question": "Has Violet demonstrated upper-stage reuse?",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "Violet",
+        "component": "upper stage",
+        "milestone": "demonstrated reuse"
+      },
+      "expected_passage_ids": [
+        "q25:a"
+      ],
+      "acceptable_passage_ids": [
+        "q25:c"
+      ],
+      "distractor_passage_ids": [
+        "q25:d"
+      ],
+      "failure_category": "wrong_component",
+      "rationale": "Demonstrated booster reuse does not establish upper-stage reuse."
+    },
+    {
+      "id": "q26",
+      "language": "en",
+      "question": "Has Hazel completed a second engine firing?",
+      "status": "ANSWERABLE",
+      "expected_answer_attributes": {
+        "entity": "Hazel",
+        "component": "engine",
+        "milestone": "second firing"
+      },
+      "expected_passage_ids": [
+        "q26:a"
+      ],
+      "acceptable_passage_ids": [
+        "q26:c"
+      ],
+      "distractor_passage_ids": [
+        "q26:d"
+      ],
+      "failure_category": "planned_vs_demonstrated",
+      "rationale": "Approval of a schedule does not establish completion."
+    }
+  ]
+}

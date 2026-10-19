@@ -2,6 +2,12 @@
 
 # Evaluation plan
 
+The frozen [answer-bearing benchmark](retrieval-benchmark.md) supplements all existing
+evaluations with 26 bilingual synthetic questions, hard distractors, useful-passage
+precision, MRR, and per-question diagnostics. It measures the unchanged passage
+ranker on a supplied corpus, not live crawling or verdict accuracy. Its measured
+baseline has 100% document Hit@5 but only 62.5% top-1 useful precision.
+
 The [sitewide retrieval benchmark](retrieval-ranking.md#reproducible-evaluation)
 reports Document Hit@5, Passage Hit@5, Passage MRR and exact-sentence retrieval on
 seven synthetic cases, with a reproducible historical Git baseline. Crawl tests cover
@@ -11,7 +17,7 @@ passages remain private. These measurements do not establish verdict accuracy.
 
 Automatic discovery now has synthetic API/selection tests in `tests/test_search_discovery.py`. `search_discovery.evaluate_discovery(selected_urls, expected_authoritative_domains, forbidden_domains, k)` computes expected-domain recall, labeled approved-URL precision and forbidden selections. The denominator for recall is unique expected domains; precision uses selected URLs at k. Empty expected sets or selected lists produce null for the relevant metric. These are fixture metrics, not production scores. API contract tests use mocked HTTP; no live-search accuracy is claimed.
 
-**Status: Synthetic retrieval smoke evaluation implemented; broader protocol proposed.**
+**Status: Synthetic smoke evaluations and the frozen answer-bearing benchmark are implemented; real-corpus validation remains proposed.**
 
 The current command evaluates six authored answerable fixture questions using expected-passage hit@5, plus two manually labeled unsupported questions for inspection only. These are not held-out research benchmarks. See the [local guide](local-retrieval.md) for exact scoring, commands, and a private ten-question workflow. Citation entailment, evidence-status classification, and generated-claim evaluation below remain future work.
 
@@ -23,7 +29,7 @@ The command does not evaluate answer accuracy, translation quality, claim suppor
 
 ## Planned evaluation
 
-Future work may add precision@k, recall@k, MRR or other ranking metrics once the relevance labels justify them, plus citation correctness, evidence-to-claim consistency, unsupported-claim detection, and multilingual retrieval quality. None of these metrics is currently computed.
+The answer-bearing benchmark now computes useful precision at 1 and 3 and passage MRR against synthetic labels. Recall@k, citation correctness, evidence-to-claim consistency, unsupported-claim detection, and representative real-corpus multilingual quality remain future work.
 
 The objective is to measure whether the system retrieves relevant evidence and represents it faithfully. Persuasive prose is not evidence of correctness.
 
