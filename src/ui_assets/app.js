@@ -12,6 +12,21 @@ async function api(path, body) {
 function button(text, action, primary = false) { const b = el('button', text, primary ? 'primary' : ''); b.type = 'button'; b.onclick = async () => { error(''); try { await action(); } catch(e) { error(e.message); } }; return b; }
 function link(url) { try { const u = new URL(url); if(u.protocol !== 'https:' || u.username || u.password) throw Error(); const a = el('a', 'Open original ↗'); a.href = u.href; a.target = '_blank'; a.rel = 'noopener noreferrer'; return a; } catch { return el('span', 'Original link unavailable', 'muted'); } }
 function locationText(loc) { return [loc.page_number ? `PDF page ${loc.page_number}` : '', loc.section_heading ? `Section: ${loc.section_heading}` : '', `Extracted paragraph ${loc.paragraph_index}`].filter(Boolean).join(' · '); }
+function relationshipMessages(match) {
+  const relation=match?.relationship;if(!relation)return [];
+  const f=relation.features||{}, messages=[];
+  if(f.same_clause)messages.push('Requested relationship terms occur in the same clause.');
+  else if(f.entity_sentence_locality)messages.push('A nearby clause appears to refer to the requested entity.');
+  else if(f.entity_paragraph_locality)messages.push('A following sentence appears to refer to the requested entity.');
+  if(f.completed_language)messages.push('Completed-event wording is present.');
+  if(f.negative_answer)messages.push('Explicit negative wording addresses the requested relationship; review its stance.');
+  if(f.temporal_match)messages.push('The requested year appears with event wording.');
+  if(f.planned_when_completed_requested)messages.push('Potential limitation: future-plan wording for a completed-event question.');
+  if(f.entity_conflict||f.component_conflict||f.jurisdiction_conflict||f.temporal_conflict)messages.push('Potential limitation: the event may concern a different entity, component, country or year.');
+  if(f.background_language)messages.push('Potential limitation: this may describe general background.');
+  if(!messages.length)messages.push('Only a partial relationship match was identified.');
+  return messages;
+}
 function selectField(form, name, label, choices, value) { const l = el('label', label), s = el('select'); s.name = name; for(const [v,t] of choices.map(c => Array.isArray(c) ? c : [c,c])) { const o = el('option',t); o.value = v; s.append(o); } if(value !== undefined) s.value = value; add(l,s); form.append(l); return s; }
 function textField(form,name,label,value='',multiline=false) { const l=el('label',label), i=el(multiline?'textarea':'input'); i.name=name; i.value=value||''; i.maxLength=2000; if(multiline)i.rows=3; add(l,i); form.append(l); return i; }
 function check(form,name,label,value) { const l=el('label',undefined,'check'), i=el('input'); i.type='checkbox';i.name=name;i.checked=!!value;add(l,i,el('span',label));form.append(l); }
@@ -92,7 +107,9 @@ function render() {
         for(const [a,z] of b.match?.highlight_spans||[]){if(Number.isInteger(a)&&Number.isInteger(z)&&a>=cursor&&z>a&&z<=text.length){sentence.append(document.createTextNode(text.slice(cursor,a).join('')),el('mark',text.slice(a,z).join('')));cursor=z;}}
         sentence.append(document.createTextNode(text.slice(cursor).join('')));
         const paragraph=review.querySelector('blockquote');paragraph.before(el('h3','Most relevant sentence'),sentence,el('h3','Paragraph context'));
-        const why=el('details');add(why,el('summary','Why this matched'),el('p',`Matched terms: ${match.matched_terms.join(', ')} · ${match.match_level} · Coverage: ${Math.round(match.term_coverage*100)}%`),el('p','Retrieval ranking only; this is not proof.','muted'));review.append(why);
+        const why=el('details');add(why,el('summary','Why this matched'),el('p',`Matched terms: ${match.matched_terms.join(', ')} · ${match.match_level} · Coverage: ${Math.round(match.term_coverage*100)}%`));
+        for(const message of relationshipMessages(match))why.append(el('p',message));
+        why.append(el('p','Retrieval ranking only; these text patterns do not establish truth, evidence strength, or verification stance.','muted'));review.append(why);
       }
     }
     if(e.passage_truncated)review.append(el('p','Passage preview shortened. Read the original before reviewing.','muted'));review.append(link(source.url));

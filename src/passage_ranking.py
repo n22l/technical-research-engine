@@ -6,6 +6,7 @@ import re
 from functools import lru_cache
 from research_search import keyword_tokens, SEARCH_STOP
 from retrieval_constraints import subject_matches, GROUPS
+from domains.aerospace.retrieval_terms import RELATIONSHIP_STRENGTH
 
 
 TOKEN = re.compile(r'[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*|[\u3400-\u9fff]')
@@ -82,10 +83,14 @@ def match_details(text, query):
             'expanded_terms': sorted(matched - {m.group().lower() for m in TOKEN.finditer(text)})}
 
 
-def rank_passages(passages, query, limit=5, per_document=2, deduplicate=True):
-    q = set(keyword_tokens(query))
+def rank_lexical_passages(passages, query, limit=5, per_document=2, deduplicate=True, *, variants=False):
+    """Preserved lexical baseline; optional domain variants only for new candidates."""
+    from relationship_ranking import normalize_variants
+    canonical = normalize_variants if variants else lambda text: text
+    scoring_query = canonical(query)
+    q = set(keyword_tokens(scoring_query))
     if not q or not passages: return []
-    vectors = [keyword_tokens(p['passage']) for p in passages]
+    vectors = [keyword_tokens(canonical(p['passage'])) for p in passages]
     df = Counter(t for v in vectors for t in q if t in v)
     average = sum(sum(v.values()) for v in vectors)/len(vectors) or 1
     hits = []
@@ -94,22 +99,25 @@ def rank_passages(passages, query, limit=5, per_document=2, deduplicate=True):
         loc = p.get('location', {})
         loc = asdict(loc) if is_dataclass(loc) else loc
         fields = p.get('source', {}).get('title', '') + ' ' + (loc.get('section_heading') or '')
-        if not subject_matches(query, text, fields): continue
+        gate_text = text + ' ' + canonical(text) if variants else text
+        gate_fields = fields + ' ' + canonical(fields) if variants else fields
+        if not subject_matches(query, gate_text, gate_fields): continue
         matched = q & v.keys()
         if not matched or (len(q) >= 3 and len(matched) < 2): continue
         length = sum(v.values())
         bm25 = sum(math.log(1+(len(vectors)-df[t]+.5)/(df[t]+.5))*v[t]*2.2/
                    (v[t]+1.2*(.25+.75*length/average)) for t in matched)
         details = match_details(text, query)
+        scoring_details = match_details(canonical(text), scoring_query) if variants else details
         ss = sentences(text, p['passage_id'])
         for s in ss: s['match'] = match_details(s['text'], query)
         best = max(ss, key=lambda s: (s['match']['term_coverage'], len(s['match']['matched_phrases']),
                                      -(s['match']['minimum_term_window'] or 100000)), default=None)
         same = bool(best and best['match']['term_coverage'] == 1)
         level = 'ALL_TERMS_SAME_SENTENCE' if same else 'ALL_TERMS_SAME_PARAGRAPH' if details['term_coverage'] == 1 else 'PARTIAL_PARAGRAPH'
-        field_boost = len(q & keyword_tokens(fields).keys())/len(q)
-        score = bm25 * details['term_coverage']**2 * (1 + 2*same + len(details['matched_phrases'])
-                + (2/(details['minimum_term_window'] or 100000)) + .2*field_boost)
+        field_boost = len(q & keyword_tokens(canonical(fields)).keys())/len(q)
+        score = bm25 * scoring_details['term_coverage']**2 * (1 + 2*same + len(scoring_details['matched_phrases'])
+                + (2/(scoring_details['minimum_term_window'] or 100000)) + .2*field_boost)
         metadata = dict(details, match_level=level, retrieval_score=round(score, 8),
                         passage_id=p['passage_id'], best_sentence=best, location=loc)
         hits.append(dict(p, score=round(score, 8), retrieval_match=metadata))
@@ -121,4 +129,39 @@ def rank_passages(passages, query, limit=5, per_document=2, deduplicate=True):
         if counts[doc] >= per_document or (deduplicate and normalized in seen): continue
         counts[doc] += 1; seen.add(normalized); result.append(p)
         if len(result) >= limit: break
+    return result
+
+
+def rank_passages(passages, query, limit=5, per_document=2, deduplicate=True, *,
+                  relationship=True, candidate_limit=100, strength=RELATIONSHIP_STRENGTH):
+    """Lexical candidates followed by bounded, deterministic relationship reranking."""
+    from relationship_ranking import interpret, rerank
+    if not relationship or not interpret(query).milestones:
+        return rank_lexical_passages(passages, query, limit, per_document, deduplicate)
+    if limit <= 0 or candidate_limit <= 0:
+        return []
+    original = rank_lexical_passages(passages, query, candidate_limit,
+        per_document=max(1, candidate_limit), deduplicate=False)
+    expanded = rank_lexical_passages(passages, query, candidate_limit,
+        per_document=max(1, candidate_limit), deduplicate=False, variants=True)
+    # Union preserves original lexical candidates when a multiword alias would
+    # otherwise suppress a useful context paragraph. Scores never use labels.
+    combined = {p['passage_id']: p for p in original}
+    for p in expanded:
+        old = combined.get(p['passage_id'])
+        if old is None or p['score'] > old['score']:
+            combined[p['passage_id']] = p
+    candidates = sorted(combined.values(), key=lambda p: (-p['score'], p['passage_id']))[:candidate_limit]
+    ranked = rerank(candidates, query, strength=strength)
+    result, counts, seen = [], Counter(), set()
+    for p in ranked:
+        doc = p['source']['id']
+        normalized = ' '.join(p['passage'].lower().split())
+        if counts[doc] >= per_document or (deduplicate and normalized in seen):
+            continue
+        counts[doc] += 1
+        seen.add(normalized)
+        result.append(p)
+        if len(result) >= limit:
+            break
     return result

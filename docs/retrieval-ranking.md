@@ -217,3 +217,128 @@ documents, four reviewable passages, no capture integrity error, and no unreview
 verdict. That additional crawl reached 31 passage-indexed documents, with 15 legacy
 pages remaining. Refresh the browser and open the new history entry; old immutable
 research records are not silently rewritten with newly retrieved evidence.
+# Relationship-aware reranking increment
+
+The current passage API preserves the lexical generator and adds a deterministic
+relationship reranker. See [measured before/after results](retrieval-benchmark.md#relationship-reranking-increment)
+for the frozen benchmark, all regressions, bilingual results and timing. Earlier
+measurements elsewhere in this document describe the earlier lexical implementation.
+
+## Candidate generation and domain configuration
+
+`rank_lexical_passages` preserves the previous BM25/phrase/proximity baseline.
+`rank_passages(..., relationship=False)` explicitly selects that baseline. Queries
+without a recognized aerospace milestone also take the unchanged path.
+
+For recognized queries, the generator takes the union of original lexical candidates
+and a second lexical pass with narrow domain variants (recover/recovers/recovery,
+stage/stages, reflight/second flight, restart/second ignition, and configured Chinese
+equivalents). The union preserves original context candidates that multiword
+canonicalization alone could lose. Each ID retains its larger lexical score.
+No original passage text or source span is rewritten. Identity/subject gates remain;
+the variant text supplements the original body for those gates, never evidence.
+
+This matters for q10: its correct passage originally shared only “Sorrel” because
+recover/recovers and stages/stage differed. Reranking alone could not recover an
+excluded candidate. The explicit variants make it retrievable without opening new
+sources or bypassing publisher policy.
+
+Sort the union by lexical score, take at most 100 candidates, then rerank and apply
+the original per-document quota and paragraph deduplication. `candidate_limit` is
+an internal adjustable parameter; even requests for more results respect that bound.
+Document search therefore considers at most those 100 passage candidates. This is
+a bounded ranking experiment, not a guarantee of complete corpus coverage.
+
+Vocabulary, status patterns, milestone distinctions and weights live in
+`src/domains/aerospace/retrieval_terms.py`, outside generic lexical scoring.
+Known entity/country aliases reuse the existing subject vocabulary. Unknown entity
+phrases are extracted from query prefixes before component/event words; no fixture
+names or benchmark annotations are in the runtime rules.
+
+## Query intent and relationship features
+
+`QueryIntent` contains entities, components, milestones, jurisdictions, explicit
+years, scope terms, status terms and negation. Attributes are inferred only from
+the user's text. `expected_answer_attributes`, labels, rationales and categories
+are never supplied to this interpretation.
+
+The reranker examines clauses separated by punctuation and a small set of English/
+Chinese conjunctions. It does not split every “and”. One selected clause supplies
+the event features; independent best matches from different participants are not
+combined. A small set of dependent/pronominal openings can inherit an immediately
+preceding entity, with weaker same-sentence or following-sentence credit.
+
+Features include entity/event locality, component match/conflict, requested milestone,
+explicit completion, explicit negative answers, requested plans, background wording,
+country participation and explicit event-year alignment. A component's “team” or
+“engineers” do not establish that component performed the event. Non-event context
+does not receive a conflicting-component-event penalty. Generic words such as
+“records” alone do not establish completed-event wording.
+
+Landing, recovery, reflight, repeated reflight and routine reuse remain distinct retrieval concepts.
+The configured milestone levels describe specificity, **not logical implications**.
+Ordinary reuse does not establish routine service. Explicitly expendable hardware
+can directly address a reuse-capability question. Negated reflight remains relevant:
+“has not been reflown” is not discarded or labeled successful.
+
+Event years require local patterns such as “in 2022” or “在2022年”; a nearby report
+year alone earns no event-date credit. Dates from another entity's clause cannot
+supply that credit. Country matching likewise operates on the event clause and
+requires explicit textual/configured evidence.
+
+## Formula and experiments
+
+Let `L` be candidate lexical score divided by the maximum candidate lexical score.
+Let `R` be the sum of these boolean-feature contributions:
+
+| Feature | Weight |
+| --- | ---: |
+| Entity appears in passage | +1 |
+| Entity and milestone in clause | +3 |
+| Inherited entity, same sentence / following sentence | +2 / +1 |
+| Entity absent from event clause without supported inheritance | -8 |
+| Requested component match / conflicting event component | +2 / -3 |
+| Requested milestone match / mismatch | +2 / -2 |
+| Explicit completed wording when completion requested | +2 |
+| Explicit negative answer to requested relationship | +1.5 |
+| Plan when completion requested / plan when plan requested | -2 / +2 |
+| General-background wording | -1 |
+| Event year match / conflict | +3 / -3 |
+| Country match / conflict | +2 / -4 |
+| Entity, component and milestone in one clause | +1 |
+
+The positive output score is `sigmoid((L + 0.25 * R) / 4)`. This monotonic transform
+keeps positive scores for existing page-weighting consumers; it is **not a probability**.
+Existing exact phrase and proximity features remain in `L`. Negation presence,
+scope-component presence and requested milestone level are also reported as diagnostics.
+
+Weights encode broad priorities (wrong event participant is more serious than weak
+background wording). One global strength was compared at 0, 0.25, 0.5, 1 and 2 over
+the entire frozen benchmark, using `python -B src/evaluate_relationships.py --experiments`.
+The four positive strengths tied on measured aggregates; 0.25 is the smallest tested
+strength with the top-1/MRR improvement. Zero isolates variant candidate generation.
+No entity-specific or question-specific weights exist. These are development
+experiments on a known synthetic benchmark, not held-out generalization estimates.
+
+## Diagnostics and boundaries
+
+`retrieval_match.relationship` exposes intent, feature flags, raw lexical score,
+relationship contribution, output score and a retrieval-only category. The UI's
+“Why this matched” shows fixed explanatory text, including future-plan and conflicting-
+attribute limitations. It does not set relevance reviews, evidence strength, stance,
+maturity or verdicts. Exact quotation/span checks and human-review gates are unchanged.
+The highlighted “Most relevant sentence” remains the existing lexical sentence
+selection; relationship diagnostics explain paragraph ordering, not a new sentence selector.
+
+The lexical generator still scans the input corpus; the extra alias pass is another
+linear scan. Clause-feature work is bounded to 100 candidates and bounded vocabulary,
+with cached normalization/segmentation. This costs additional latency, measured below
+in the benchmark report, without model calls or network dependencies.
+
+Limitations: unknown-name extraction, clause splitting and pronoun inheritance are
+heuristics, not dependency parsing. Shared participants within one clause, abbreviations,
+unusual word order, complex dates, ambiguous pronouns and unconfigured technical
+variants can fail. Only explicit years are currently aligned, not arbitrary date
+expressions. A high relationship score can describe a plan, denial or false source
+claim. Frozen tests remain small, synthetic and only sparsely labeled; every factual
+judgment still requires the existing review process.

@@ -6,7 +6,12 @@ The frozen [answer-bearing benchmark](retrieval-benchmark.md) supplements all ex
 evaluations with 26 bilingual synthetic questions, hard distractors, useful-passage
 precision, MRR, and per-question diagnostics. It measures the unchanged passage
 ranker on a supplied corpus, not live crawling or verdict accuracy. Its measured
-baseline has 100% document Hit@5 but only 62.5% top-1 useful precision.
+initial lexical baseline has 100% document Hit@5 but only 62.5% top-1 useful precision.
+The [relationship increment](retrieval-benchmark.md#relationship-reranking-increment)
+compares that preserved baseline with the deterministic reranker, including every
+per-case regression and a separate Chinese subset. Use
+`python -B src/evaluate_relationships.py --experiments` to reproduce it. No frozen
+labels are runtime query hints.
 
 The [sitewide retrieval benchmark](retrieval-ranking.md#reproducible-evaluation)
 reports Document Hit@5, Passage Hit@5, Passage MRR and exact-sentence retrieval on
