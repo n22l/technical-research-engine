@@ -42,7 +42,11 @@ class LocalTests(unittest.TestCase):
             with self.assertRaises(SearchError):
                 LocalSearchProvider(Path(tmp), self.policy, max_pages=1).search('booster')
     def test_default_provider_has_no_api_key_requirement(self):
-        with tempfile.TemporaryDirectory() as tmp, patch.dict('os.environ', {}, clear=True):
+        # Remove all application/API configuration while retaining the OS variables
+        # required to launch Git for the real private-directory safety check.
+        runtime = {k: v for k, v in os.environ.items()
+                   if k.upper() in {'PATH', 'SYSTEMROOT', 'WINDIR', 'COMSPEC', 'PATHEXT', 'TEMP', 'TMP'}}
+        with tempfile.TemporaryDirectory() as tmp, patch.dict('os.environ', runtime, clear=True):
             provider = configured_provider(base=Path(tmp), policy=self.policy)
             self.assertEqual(provider.name, 'local')
 
