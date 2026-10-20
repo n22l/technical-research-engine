@@ -82,7 +82,7 @@ labeled distractor in the first three. All cases remain available, not just fail
 
 ## Scoring contract
 
-The adapter calls unchanged `rank_passages` once per question over all 78 passages,
+The original baseline called `rank_passages` once per question over all 78 passages,
 with a limit equal to corpus size, default two passages per document and deduplication
 enabled. It does not use expected attributes or labels in retrieval. This isolates
 ranking from crawl coverage, extraction, live index freshness and publisher access.
@@ -154,10 +154,152 @@ every failure mode loses at rank 1.
 | q25 wrong_component | Has Violet demonstrated upper-stage reuse? | Top is correct; rank 2: Violet demonstrated booster reuse; the upper-stage team observed the flight. | Violet upper-stage reuse has not been demonstrated; the upper hardware is discarded. / 1 | Wrong component remains a top-3 distractor. |
 | q08 background_not_answer | Has Rowan completed booster reflight? | Top is correct; rank 2: Rowan booster reflight offers lower costs and faster turnaround in principle. | Rowan completed booster reflight when unit R4 launched for the second time. / 1 | General benefits remain a top-3 distractor, not a demonstrated event. |
 
-## Next ranking experiment (not implemented)
+## Original next-step proposal (implemented in the increment below)
 
 Test a relationship-aware reranking step that aligns the requested entity, component
 and milestone with the same event in a passage, retaining negation and planned versus
 completed status. Measure it against this frozen corpus and inspect regressions;
 do not use the benchmark's expected attributes as query-time hints. This is one
-proposed future experiment, not an implemented change or a promised improvement.
+historical proposal; the following section records its implementation and measurements.
+
+## Relationship reranking increment
+
+The earlier section records the original proposal and lexical baseline. The increment
+described here implements that proposal; `evaluate_benchmark.py` now exercises the
+default reranker. `evaluate_relationships.py` compares the preserved
+`rank_lexical_passages` baseline with the new default on the identical frozen input.
+Both receive only query text and ordinary passage records, never expected attributes
+or labels. Candidate generation and limitations are in [the ranking guide](retrieval-ranking.md).
+
+Base revision: `d868347` (merged benchmark PR #19). The fixture and checksum are
+unchanged: `6d714641ae818a461a1f25eda2dc36572dfbc571a84316ebd4c35c956edf4f8a`.
+
+```powershell
+python -B src/evaluate_relationships.py --experiments
+python -B src/evaluate_benchmark.py
+python -B src/evaluate_passages.py
+python -B src/evaluate_frozen.py
+python -B -m unittest discover -s tests -q
+node --check src/ui_assets/app.js
+node tests/ui_relationship_diagnostics.js
+```
+
+The comparison prints all answerable questions' old/new expected ranks and top-three
+texts/labels, every metric regression, both language subsets and warm timing samples.
+The ambiguous cases remain excluded from scored comparisons. Timing runs alternate
+old/new order after warmup and include lexical candidate generation plus reranking,
+not I/O, diagnostics serialization or network calls.
+
+### Before / after, 24 scored questions
+
+| Metric | Original lexical | Relationship reranker |
+| --- | ---: | ---: |
+| Document Hit@5 | 1.000000 | 1.000000 |
+| Passage Hit@5 | 0.958333 | 1.000000 |
+| Passage MRR | 0.777778 | 1.000000 |
+| Top-1 useful precision | 0.625000 | 1.000000 |
+| Top-3 useful precision | 0.513889 (37/72) | 0.555556 (40/72) |
+| Distractor@3 | 0.916667 (22/24) | 0.958333 (23/24) |
+| Distractor slot rate@3 | 0.305556 (22/72) | 0.319444 (23/72) |
+
+The desired decrease in distractors **was not achieved**. This is a strong improvement
+in first-result selection on this particular authored corpus, with a residual
+top-three regression. It is not a perfect ranking or real-world accuracy claim.
+
+### Required case inspection
+
+| ID | Failure type | Old expected rank | New expected rank |
+| --- | --- | ---: | ---: |
+| q01 | Wrong vehicle participant | 2 | 1 |
+| q04 | Report year versus event year | 2 | 1 |
+| q05 | Plan versus completed reflight | 2 | 1 |
+| q07 | Single trial versus routine reuse | 3 | 1 |
+| q10 | “Both” payload roles versus stage recovery | Absent | 1 |
+| q15 | Country discussed event versus performed event | 2 | 1 |
+| q18 | Recovery/negative reflight versus completed reflight | 3 | 1 |
+| q24 | Chinese demonstrated synonym versus exact plan wording | 2 | 1 |
+| q25 | Upper stage versus booster | 1 | 1 |
+| q08 | Specific reflight versus general benefits | 1 | 1 |
+
+q13 also improves from rank 2 to 1. Every other answerable expected rank remains 1.
+q10 now retrieves and prefers the actual stage-specific passage; it does not reward
+an arbitrary occurrence of “both”. q18's negative reflight passage remains retrievable
+and gets a negative-answer relevance diagnostic, never a successful-reflight stance.
+The last two rows were already correct at rank 1; this increment does not claim to
+have fixed their remaining distractor contamination.
+
+### Every measured regression
+
+No expected-passage rank, hit metric, MRR or useful-precision case regresses.
+The sole per-case metric regression is **q20**, `木槿一级完成复飞了吗？`:
+
+- Expected rank: **1 → 1**.
+- Distractor@3: **0 → 1**; useful precision@3 stays **1/3**.
+- The target-specific general-benefits paragraph `q20:d` enters rank 2, displacing
+  an unlabeled other-program passage. Previously ranks 2 and 3 were `q13:d` and
+  `q15:d`; now they are `q20:d` and `q13:d`.
+- Entity alignment favors background about the requested entity over a completed
+  event involving another entity. The background penalty is insufficient to push
+  it beyond rank 3. Sparse labels do not count the old wrong-entity results as
+  distractors for q20, so this regression must be read alongside unchanged usefulness.
+
+This raises overall and Chinese distractor count/rate. English distractor metrics
+are unchanged. No labels were reclassified to hide the regression.
+
+### Language subsets
+
+Each subset searches the same complete bilingual corpus. One ambiguous question
+per language is excluded (13 English and 11 Chinese answerable).
+
+| Metric | English before | English after | Chinese before | Chinese after |
+| --- | ---: | ---: | ---: | ---: |
+| Document Hit@5 | 1.000000 | 1.000000 | 1.000000 | 1.000000 |
+| Passage Hit@5 | 0.923077 | 1.000000 | 1.000000 | 1.000000 |
+| Passage MRR | 0.756410 | 1.000000 | 0.803030 | 1.000000 |
+| Top-1 useful precision | 0.615385 | 1.000000 | 0.636364 | 1.000000 |
+| Top-3 useful precision | 0.538462 | 0.564103 | 0.484848 | 0.545455 |
+| Distractor@3 | 0.923077 | 0.923077 | 0.909091 | 1.000000 |
+| Distractor slot rate@3 | 0.307692 | 0.307692 | 0.303030 | 0.333333 |
+
+### Weight experiment and latency
+
+With variant candidate generation but relationship strength zero: Hit@5 is 1.0,
+MRR 0.840278, top-1 usefulness 0.708333, top-3 usefulness 0.527778 and distractor
+slot rate 0.305556. Strengths **0.25, 0.5, 1 and 2** all give the final aggregate
+results above. The chosen 0.25 is the weakest tested nonzero strength achieving the
+improvement; weights are shared across all entities, languages and questions.
+
+On the local Windows host, five alternating warm runs of all 26 queries produced
+median total ranking times of **0.528265 s lexical** and **1.177089 s relationship**:
+about **20.3 ms → 45.3 ms per query**, or **2.23×**. These are wall-clock observations,
+not a service-level guarantee; hardware/load and warm caches matter. The extra
+candidate pass and clause analysis incur a real cost. No performance claim is made
+for larger corpora or cold starts.
+
+### Tests and integrity
+
+Before changes, the full suite ran 157 tests: 154 passed, 2 skipped, and the known
+`test_default_provider_has_no_api_key_requirement` environment error. A separate
+logical commit preserves only OS process-launch variables while that test still
+clears all application/API configuration and calls the real private-directory check.
+No production safety check was bypassed.
+
+Final `python -B -m unittest discover -s tests -q`: **175 tests, 173 passed,
+2 skipped, no failures/errors**. The 18 added Python tests exercise unfamiliar
+entity names, component conflicts, negative answers, plans, routine reuse, dates,
+Chinese variants, inherited subjects, candidate limits, immutable input and
+regression reporting. The offline Node diagnostic test and JavaScript syntax check
+also pass. These UI checks validate message generation, not a live-browser walkthrough.
+
+The old seven-case evaluation remains 1.0 on all four reported passage metrics.
+The frozen ten-case evaluation remains 7/10 lexical and 10/10 subject-constrained.
+Frozen v1 fixture bytes/checksum are unchanged. No private research, additional
+sources, providers, external API, model, embedding or vector database was added.
+Verification taxonomy, review gates, source authority and citation checks are unchanged.
+
+### One recommended next task
+
+Validate this reranker against an independently reviewed bilingual set of real
+article passages, with comprehensive usefulness/distractor labels, before further
+weight tuning. Perfect first-result performance on a known synthetic fixture cannot
+establish production generalization. That validation is not implemented here.
